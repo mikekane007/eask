@@ -18,8 +18,22 @@ get feedback on each answer. Original was a single-file Claude artifact.
 
 ## Skills (in `.claude/skills/`)
 
-`autopilot` (drive the project), `implement`, `three-engine`, `game-content`, `review-changes`,
-`git-workflow`. Add a dated line to a skill's Gotchas whenever you learn something the hard way.
+`autopilot` (drive the project and route work), `implement`, `three-engine`, `game-content`,
+`review-changes`, `git-workflow`, `testing`, `quality-gates`, `performance`, `accessibility`,
+`security-audit`, `dependency-vetting`, `compare-options`, `research`, `bug-hunt`, `write-docs`,
+`release`. Add a dated line to a skill's Gotchas whenever you learn something the hard way.
+Decisions live in `docs/adr/`.
+
+## Quality gates
+
+`npm run check` = format, lint, typecheck, unit tests, knip. Hooks (lefthook) run it on push and format
+and lint on commit; commit messages follow Conventional Commits with the scopes in
+`commitlint.config.js`. CI repeats everything and adds `npm audit`, gitleaks and e2e.
+
+## Machine limits
+
+The owner's laptop is modest (2016 i7 quad-core, integrated GPU, nearly full SSD). Run one heavy tool
+at a time, never the e2e suite with many workers locally, never `taskkill /IM node.exe`.
 
 ## Backlog (pick the first unchecked)
 

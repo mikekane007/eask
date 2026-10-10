@@ -15,13 +15,23 @@ The owner wants steady, verified progress and few questions. Decide ordinary eng
    or more than one area)? Split it first.
 3. **Route**
 
-| The task is about...                              | Use skill        |
-| ------------------------------------------------- | ---------------- |
-| code anywhere                                     | `implement`      |
-| the 3D scene, lighting, characters, camera, input | `three-engine`   |
-| conversations, people, places, scoring, balance   | `game-content`   |
-| a diff about to be committed                      | `review-changes` |
-| commit, push, branches                            | `git-workflow`   |
+| The task is about...                              | Use skill             |
+| ------------------------------------------------- | --------------------- |
+| code anywhere                                     | `implement`           |
+| the 3D scene, lighting, characters, camera, input | `three-engine`        |
+| conversations, people, places, scoring, balance   | `game-content`        |
+| a diff about to be committed                      | `review-changes`      |
+| commit, push, branches                            | `git-workflow`        |
+| tests, a bug fix, a failing test                  | `testing`, `bug-hunt` |
+| a gate, hook, lint or CI problem                  | `quality-gates`       |
+| speed, frame rate, bundle size, memory            | `performance`         |
+| UI, keyboard, contrast, screen readers            | `accessibility`       |
+| a new dependency or a Dependabot PR               | `dependency-vetting`  |
+| a choice between approaches (write an ADR)        | `compare-options`     |
+| unsure how a library or API behaves               | `research`            |
+| auth, secrets, XSS, headers, audits               | `security-audit`      |
+| docs, README, changelog                           | `write-docs`          |
+| version, tag, deploy, hosting (ask first)         | `release`             |
 
 4. **Decide or ask**
    - Ask first: anything that costs money, accounts/credentials, publishing or deploying publicly,
