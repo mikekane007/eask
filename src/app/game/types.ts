@@ -66,7 +66,7 @@ export interface CityTheme {
   /** Utility poles with sagging wires (otherwise plain street lamps). */
   wires: boolean;
   stalls: [string, string][];
-  vehicles: { labels: string[]; colors: number[] };
+  vehicles: { labels: string[]; colors: number[]; busShare: number };
   skins: number[];
   /** Wax-print fabric on clothes. */
   waxPrint: boolean;

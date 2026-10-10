@@ -6,8 +6,9 @@ import { createCity } from './city';
 import { type GameService, type Near } from './game.service';
 import { createInput } from './input';
 import { createKit } from './kit';
-import { H, T, markerPos, roadC } from './layout';
+import { H, markerPos } from './layout';
 import { createLighting } from './lighting';
+import { createTraffic } from './traffic';
 import { createWeatherFx } from './weather-fx';
 import type { City } from './types';
 export interface Engine {
@@ -17,7 +18,7 @@ export interface Engine {
 }
 
 /**
- * Builds the whole 3D street (city blocks, landmarks, people, tro-tros, day/night light)
+ * Builds the whole 3D street (city blocks, landmarks, people, traffic, weather, day/night light)
  * and runs the render loop. Everything UI-facing goes through GameService.
  */
 export async function createEngine(
@@ -72,7 +73,8 @@ export async function createEngine(
   const world = createCity(scene, kit, builders, city);
   const { solids, markers, beams, smoke, clouds, ground } = world;
   const { facadeMats, lampGlows } = builders;
-  const { player, npcs, tros, S0 } = createCharacters(scene, kit, svc, city);
+  const traffic = createTraffic(scene, kit, city.theme);
+  const { player, npcs, S0 } = createCharacters(scene, kit, svc, city);
   const input = createInput(canvas, svc, zone);
   const { keys } = input;
 
@@ -319,14 +321,14 @@ export async function createEngine(
     });
     ground.material.color.setScalar(1 - 0.28 * wx.rain);
     fx.update(dt, p, nf);
-    tros.forEach((g) => {
-      const u = g.userData;
-      u['t'] = (u['t'] + u['speed'] * dt) % T;
-      const pos = -H + (u['dir'] > 0 ? u['t'] : T - u['t']);
-      const lane = roadC(u['k']) + (u['dir'] > 0 ? 2 : -2) * (u['horiz'] ? 1 : -1);
-      if (u['horiz']) g.position.set(pos, 0, lane);
-      else g.position.set(lane, 0, pos);
-    });
+    // Traffic: lights run on play time; vehicles slow down in bad weather and stop for the player.
+    traffic.update(
+      dt,
+      now / 1000,
+      st.hour + st.minute / 60,
+      svc.playing() ? p : null,
+      Math.max(0.5, 1 - 0.2 * wx.rain - 0.25 * wx.fog),
+    );
     camT.set(p.x, 19 * svc.zoom(), p.z + 21 * svc.zoom());
     if (!camInit) {
       cam.position.copy(camT);

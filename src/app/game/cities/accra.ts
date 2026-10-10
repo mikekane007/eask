@@ -26,6 +26,7 @@ export const ACCRA: City = {
     vehicles: {
       labels: ['GOD IS GOOD', 'NO KING AS GOD', 'PSALM 23', 'BY HIS GRACE', 'JESUS NEVER FAILS'],
       colors: [0xf2b705, 0x2e86c1, 0xe9e9e9, 0xd7263d, 0x1e8a4c],
+      busShare: 0.6,
     },
     skins: [0x5b3a24, SKIN.darker, SKIN.deep, SKIN.darkest],
     waxPrint: true,

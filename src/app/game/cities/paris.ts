@@ -26,6 +26,7 @@ export const PARIS: City = {
     vehicles: {
       labels: ['LIGNE 38', 'LIGNE 69', 'NAVETTE', 'LIGNE 21', 'LIGNE 72'],
       colors: [0x2e8b57, 0xeeeeee, 0x2e5e8c, 0xe8b04a, 0x7a2e3b],
+      busShare: 0.2,
     },
     skins: [SKIN.fair, SKIN.olive, SKIN.deep, SKIN.light, SKIN.tan, SKIN.darker],
     waxPrint: false,

@@ -26,6 +26,7 @@ export const DOUAI: City = {
     vehicles: {
       labels: ['LIGNE A', 'LIGNE B', 'NAVETTE', 'LIGNE C', 'LIGNE D'],
       colors: [0x3b6e8f, 0xb5532f, 0xeeeeee, 0xd9a441, 0x4f7a4a],
+      busShare: 0.2,
     },
     skins: [SKIN.fair, SKIN.light, SKIN.fair, SKIN.olive, SKIN.light, SKIN.fair],
     waxPrint: false,

@@ -32,6 +32,7 @@ const EN: RulesDoc = {
       items: [
         'Move: **W A S D** or the **arrow keys**. On a phone, drag anywhere on the street.',
         'Walk into a **gold ring** to open a place or start a conversation.',
+        'Traffic obeys the signals and stops for you, but busy roads are still best crossed with care. Rush hours are busier than nights.',
         '**M** button: show or hide the map. **+ / −**: zoom. **›**: people and progress. **?**: these rules.',
       ],
     },
@@ -111,6 +112,7 @@ const FR: RulesDoc = {
       items: [
         'Se déplacer : **W A S D** ou les **flèches**. Sur téléphone, faites glisser le doigt n’importe où dans la rue.',
         'Entrez dans un **cercle doré** pour ouvrir un lieu ou engager une conversation.',
+        'La circulation respecte les feux et s’arrête pour vous, mais les grandes routes se traversent toujours avec prudence. Les heures de pointe sont plus chargées que les nuits.',
         'Bouton **M** : afficher ou masquer la carte. **+ / −** : zoom. **›** : personnes et progression. **?** : ces règles.',
       ],
     },

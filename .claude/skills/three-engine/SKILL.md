@@ -59,3 +59,7 @@ button or by editing the saved state) when touching lights or emissive materials
   builders and `city` to `city.ts` and `characters.ts`. Never read module-level place or people constants;
   use `city.places` and `city.people`. `AppComponent` creates a fresh `<canvas>` per city and `dispose()` calls
   `forceContextLoss()` so the GPU memory is freed when you switch cities.
+- 2026-10-10: Traffic is split into `traffic-logic.ts` (pure rules: signals, density, braking; fully unit tested) and
+  `traffic.ts` (vehicles, lanes, instanced signal lamps). Vehicles follow `desiredSpeed` each frame. Keep rules in
+  the pure file. Conversation people stand at 4.2 m from a road centre (outside the lanes) so cars never drive
+  through them. Instance colours (`setColorAt`) are NOT converted for the renderer: call `.convertSRGBToLinear()`.

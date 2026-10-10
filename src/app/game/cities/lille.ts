@@ -26,6 +26,7 @@ export const LILLE: City = {
     vehicles: {
       labels: ['LIGNE 1', 'LIGNE 2', 'LIGNE 14', 'NAVETTE', 'LIGNE 18'],
       colors: [0x2e5e8c, 0xc0392b, 0xeeeeee, 0xe8b04a, 0x2e7d4f],
+      busShare: 0.25,
     },
     skins: [SKIN.fair, SKIN.light, SKIN.olive, SKIN.brown, SKIN.fair, SKIN.tan],
     waxPrint: false,
