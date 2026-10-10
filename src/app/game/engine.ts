@@ -119,17 +119,21 @@ export async function createEngine(
       raf = requestAnimationFrame(frame);
       return;
     }
-    const dt = Math.min(0.05, (now - last) / 1000);
+    const realDt = Math.min(1, (now - last) / 1000);
+    const dt = Math.min(0.05, realDt);
     last = now;
     const p = player.position;
     const st = svc.state();
-    if (st.hour !== hourShown) {
-      hourShown = st.hour;
-      setTimeTarget(st.hour);
+    // Light follows the clock in quarter-hour steps; the render loop eases between them.
+    const clockHour = Math.floor((st.hour + st.minute / 60) * 4) / 4;
+    if (clockHour !== hourShown) {
+      hourShown = clockHour;
+      setTimeTarget(clockHour);
     }
     const talking = svc.talking();
 
     if (svc.playing() && !talking && !svc.rulesOpen()) {
+      svc.tick(realDt);
       let mx = 0,
         mz = 0;
       if (keys['w'] || keys['arrowup']) mz -= 1;
@@ -311,8 +315,8 @@ export async function createEngine(
     raf = requestAnimationFrame(frame);
   }
 
-  setTimeTarget(S0.hour);
-  hourShown = S0.hour;
+  setTimeTarget(S0.hour + S0.minute / 60);
+  hourShown = Math.floor((S0.hour + S0.minute / 60) * 4) / 4;
   snapLight();
 
   return {

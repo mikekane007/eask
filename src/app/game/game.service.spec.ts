@@ -1,7 +1,7 @@
-import { Injector, runInInjectionContext } from '@angular/core';
+import { Injector, NgZone, runInInjectionContext } from '@angular/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ACCRA } from './cities/accra';
-import { GameService } from './game.service';
+import { GameService, SECONDS_PER_GAME_HOUR } from './game.service';
 import { I18n } from './i18n/i18n.service';
 import type { Quality } from './types';
 
@@ -10,7 +10,13 @@ const PLACES = ACCRA.places;
 
 /** A service with the test language fixed to English and Accra selected. */
 function makeService(cityId = 'accra'): GameService {
-  const injector = Injector.create({ providers: [{ provide: I18n, useClass: I18n }] });
+  const injector = Injector.create({
+    providers: [
+      { provide: I18n, useClass: I18n },
+      // Tests run without Zone.js, so a plain stand-in that just runs the callback is enough.
+      { provide: NgZone, useValue: { run: <T>(fn: () => T): T => fn() } },
+    ],
+  });
   const svc = runInInjectionContext(injector, () => new GameService());
   svc.selectCity(cityId);
   return svc;
@@ -66,6 +72,48 @@ describe('GameService', () => {
 
     it('shows a dash for accuracy until an answer is given', () => {
       expect(svc.accuracy()).toBe('–');
+    });
+  });
+
+  describe('time passing while walking about', () => {
+    it('advances the clock by the minute, not on every frame', () => {
+      svc.tick(1);
+      expect(svc.state().minute).toBe(0);
+      svc.tick(SECONDS_PER_GAME_HOUR / 60); // one game minute
+      expect(svc.state().minute).toBe(1);
+    });
+
+    it('moves to the next hour after SECONDS_PER_GAME_HOUR seconds and applies the hourly drain', () => {
+      const before = svc.state();
+      svc.tick(SECONDS_PER_GAME_HOUR);
+      const s = svc.state();
+      expect([s.hour, s.minute]).toEqual([before.hour + 1, 0]);
+      expect(s.body).toBeCloseTo(before.body - 1.5);
+      expect(s.word).toBeCloseTo(before.word - 0.2);
+    });
+
+    it('rolls over midnight into a new day', () => {
+      svc.patch({ hour: 23, minute: 59 });
+      svc.tick(SECONDS_PER_GAME_HOUR / 60);
+      const s = svc.state();
+      expect([s.day, s.hour, s.minute]).toEqual([2, 0, 0]);
+    });
+
+    it('collapses at home when time runs the energy out', () => {
+      const teleport = vi.fn();
+      svc.teleport = teleport;
+      svc.patch({ body: 1 });
+      svc.tick(SECONDS_PER_GAME_HOUR);
+      expect(teleport).toHaveBeenCalledOnce();
+      expect(svc.state().body).toBeGreaterThan(0);
+    });
+
+    it('resets the minutes when sleeping', () => {
+      const sleep = place('home').opts?.[0];
+      if (!sleep) throw new Error('missing option');
+      svc.patch({ hour: 20, minute: 40 });
+      svc.usePlaceOption(sleep);
+      expect([svc.state().hour, svc.state().minute]).toEqual([7, 0]);
     });
   });
 

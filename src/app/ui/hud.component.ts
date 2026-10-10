@@ -25,7 +25,8 @@ import { I18n } from '../game/i18n/i18n.service';
           </div>
         </div>
         <div class="clock">
-          <b>{{ pad(svc.state().hour) }}:00</b><span>{{ i18n.t('day', { n: svc.state().day }) }}</span>
+          <b>{{ pad(svc.state().hour) }}:{{ pad(svc.state().minute) }}</b
+          ><span>{{ i18n.t('day', { n: svc.state().day }) }}</span>
         </div>
       </div>
       <div class="side">

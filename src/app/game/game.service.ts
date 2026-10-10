@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, NgZone, computed, inject, signal } from '@angular/core';
 import { CITIES, getCity } from './cities';
 import { I18n } from './i18n/i18n.service';
 import { markerPos } from './layout';
@@ -24,6 +24,9 @@ export interface Talk {
   ending?: 'open' | 'seed' | 'awayCut' | 'awayPolite';
 }
 
+/** Real seconds that make one game hour while you walk about. */
+export const SECONDS_PER_GAME_HOUR = 180;
+
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
 const shuffle = <T>(a: T[]): T[] => {
   a = a.slice();
@@ -39,6 +42,8 @@ const freshState = (): GameState => ({ ...FRESH, best: {} });
 @Injectable({ providedIn: 'root' })
 export class GameService {
   private readonly i18n = inject(I18n);
+  private readonly zone = inject(NgZone);
+  private clockCarry = 0;
 
   readonly cities = CITIES;
   /** The city being played, or null while the city picker is showing. */
@@ -206,6 +211,26 @@ export class GameService {
     return s;
   }
 
+  /**
+   * Lets time pass while the player walks about. Called every frame with the real seconds elapsed; the state
+   * only changes (and the UI only updates) once per game minute.
+   */
+  tick(realSeconds: number): void {
+    this.clockCarry += (realSeconds * 60) / SECONDS_PER_GAME_HOUR;
+    const whole = Math.floor(this.clockCarry);
+    if (whole < 1) return;
+    this.clockCarry -= whole;
+    this.zone.run(() => {
+      this.state.update((s) => {
+        let next: GameState = { ...s, minute: s.minute + whole };
+        while (next.minute >= 60) next = this.passHours({ ...next, minute: next.minute - 60 }, 1);
+        return next;
+      });
+      if (this.state().body <= 0) this.faint();
+      this.save();
+    });
+  }
+
   private faint(): void {
     this.state.update((s) => this.passHours({ ...s, body: 45 }, 10));
     const h = this.homePlace();
@@ -246,7 +271,7 @@ export class GameService {
 
   usePlaceOption(o: PlaceOption): void {
     if (o.sleep) {
-      this.state.update((s) => ({ ...s, body: 100, day: s.hour >= 7 ? s.day + 1 : s.day, hour: 7 }));
+      this.state.update((s) => ({ ...s, body: 100, day: s.hour >= 7 ? s.day + 1 : s.day, hour: 7, minute: 0 }));
       this.toast(this.i18n.t('rested', { n: this.state().day }));
     } else {
       this.state.update((s) => {

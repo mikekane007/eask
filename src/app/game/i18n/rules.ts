@@ -40,7 +40,7 @@ const EN: RulesDoc = {
       items: [
         '**Energy** (starts at 80, max 100): talking costs 8 energy.',
         '**Word** (starts at 10, max 100): your Bible knowledge. It unlocks harder conversations. A wise answer gives +2.',
-        '**Time**: every hour that passes costs 1.5 energy and 0.2 Word.',
+        '**Time**: every hour that passes costs 1.5 energy and 0.2 Word. Time also passes slowly as you walk about (one hour takes about three minutes), so shops open and close and night falls.',
         '**Wise answers**: the share of your answers that were the best choice.',
         'If energy reaches 0 you collapse and wake at home 10 hours later with 45 energy.',
       ],
@@ -118,7 +118,7 @@ const FR: RulesDoc = {
       items: [
         '**Énergie** (80 au départ, 100 au maximum) : une conversation coûte 8 d’énergie.',
         '**Parole** (10 au départ, 100 au maximum) : votre connaissance de la Bible. Elle débloque des conversations plus difficiles. Une sage réponse donne +2.',
-        '**Temps** : chaque heure qui passe coûte 1,5 d’énergie et 0,2 de Parole.',
+        '**Temps** : chaque heure qui passe coûte 1,5 d’énergie et 0,2 de Parole. Le temps passe aussi lentement quand vous vous promenez (une heure dure environ trois minutes) : les commerces ouvrent et ferment, et la nuit tombe.',
         '**Bonnes réponses** : la part de vos réponses qui étaient le meilleur choix.',
         'Si l’énergie tombe à 0, vous vous effondrez et vous vous réveillez chez vous 10 heures plus tard avec 45 d’énergie.',
       ],
