@@ -218,5 +218,5 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
     return g;
   });
 
-  return { player, npcs, S0, setAvatar };
+  return { player, npcs, S0, setAvatar, buildHero: makeHero };
 }

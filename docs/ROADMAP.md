@@ -41,7 +41,9 @@ Legend: ✅ done · 🔄 in progress · ⏳ planned · ⏸ waiting on owner
 - ✅ 5.2 Choose your character: guy or lady, skin, hair, clothes (kept on the device, shared by every city)
 - ✅ 5.3 Autopilot: walk to the church, café, home or a person around the buildings (grid path finding, `pathfind.ts`)
 - ✅ 5.4 Typed replies on one question per person, judged by ideas in both languages (`typed-answer.ts`, content in `cities/typed.ts`, draft for review)
-- ⏳ 5.5 Multiplayer with Firebase: room codes, see each other, meet a group together and take turns. Needs the owner to create the Firebase project; networking sits behind one small interface so the provider can change.
+- ✅ 5.5 Playing together (Firebase, ADR 0007): room codes, anonymous join, see each other walk with names, blue dots on the minimap
+- ⏳ 5.6 Meet a group of people together and take turns answering (host leads the scene, everyone sees the result; draft content for review)
+- ✅ 5.7 Faster start: the 3D engine loads only when a city is chosen (first download 1.04 MB → 459 kB)
 
 ## Standing rules
 

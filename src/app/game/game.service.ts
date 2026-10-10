@@ -106,6 +106,8 @@ export class GameService {
     z: number;
     rot: number;
     npcs: { id: string; x: number; z: number; on: boolean }[];
+    /** Other players in the room, for the minimap. */
+    peers: readonly { id: string; name: string; x: number; z: number }[];
     /** How many vehicles and background walkers are out right now (for checks and sound). */
     stats: { vehicles: number; walkers: number };
   } = {
@@ -113,9 +115,13 @@ export class GameService {
     z: 0,
     rot: 0,
     npcs: [],
+    peers: [],
     stats: { vehicles: 0, walkers: 0 },
   };
   readonly joy = signal<{ x: number; y: number; dx: number; dy: number } | null>(null);
+
+  /** Set by the room service so that leaving a city also leaves the room you were playing together in. */
+  onLeaveCity: () => void = () => undefined;
 
   /** Set by the 3D engine so the service can move the player. */
   teleport: (x: number, z: number) => void = () => undefined;
@@ -208,6 +214,7 @@ export class GameService {
 
   /** Back to the city picker. Progress is already saved after every meaningful change. */
   leaveCity(): void {
+    this.onLeaveCity();
     if (this.cityId()) this.save();
     this.playing.set(false);
     this.current.set(null);

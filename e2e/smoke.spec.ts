@@ -7,6 +7,9 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     if (!sessionStorage.getItem('e2e-seeded')) {
       localStorage.clear();
+      // a look is already chosen, so the first-time character screen does not get in the way of other tests
+      if (!location.hash.includes('new-player'))
+        localStorage.setItem('goandtell:avatar', '{"female":false,"skin":4,"hair":0,"outfit":0}');
       sessionStorage.setItem('e2e-seeded', '1');
     }
   });
@@ -53,13 +56,13 @@ test('sleeping restores energy and advances the day', async ({ page }) => {
   await page.getByRole('button', { name: /Sleep till morning/ }).click();
 
   await expect(page.getByText(/Rested\. Day 2/)).toBeVisible();
-  await expect(page.getByText('Day 2', { exact: true })).toBeVisible();
+  await expect(page.getByText(/^Day 2 ·/)).toBeVisible();
 });
 
 test('progress survives a reload and offers Continue', async ({ page }) => {
   await play(page);
   await page.getByRole('button', { name: /Sleep till morning/ }).click();
-  await expect(page.getByText('Day 2', { exact: true })).toBeVisible();
+  await expect(page.getByText(/^Day 2 ·/)).toBeVisible();
 
   await page.reload();
   await page.locator('#city-accra').click();
@@ -116,7 +119,7 @@ test('the language can be switched in the middle of the game', async ({ page }) 
 test('each city keeps its own progress, and you can change city from the rules', async ({ page }) => {
   await play(page, 'accra');
   await page.getByRole('button', { name: /Sleep till morning/ }).click();
-  await expect(page.getByText('Day 2', { exact: true })).toBeVisible();
+  await expect(page.getByText(/^Day 2 ·/)).toBeVisible();
 
   await page.getByRole('button', { name: 'Game rules' }).click();
   await page.getByRole('button', { name: 'Change city' }).click();
@@ -124,7 +127,7 @@ test('each city keeps its own progress, and you can change city from the rules',
 
   await page.locator('#city-douai').click();
   await page.getByRole('button', { name: 'Step out' }).click();
-  await expect(page.getByText('Day 1', { exact: true })).toBeVisible();
+  await expect(page.getByText(/^Day 1 ·/)).toBeVisible();
 });
 
 test('a city with a real street map loads it, shows the credit and starts beside home', async ({ page }) => {
@@ -134,4 +137,38 @@ test('a city with a real street map loads it, shows the credit and starts beside
   await expect(page.getByText('© OpenStreetMap contributors (ODbL)')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Your flat' })).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test('a new player chooses a look before stepping out', async ({ page }) => {
+  await page.goto('/#new-player');
+  await page.locator('#city-accra').click();
+  await page.getByRole('button', { name: 'Step out' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Your character' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Lady' }).click();
+  await dialog.getByRole('button', { name: 'Kente cloth' }).click();
+  await dialog.getByRole('button', { name: 'Done' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText('Energy', { exact: true })).toBeVisible();
+});
+
+test('autopilot offers the places and people of the city', async ({ page }) => {
+  await play(page);
+  await page.getByRole('button', { name: 'Autopilot' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Walk by itself' });
+  await expect(dialog.getByRole('button', { name: 'Kwame' })).toBeVisible();
+  await dialog.getByRole('button', { name: 'Kwame' }).click();
+  await expect(page.getByText('Walking there…')).toBeVisible();
+  await page.getByRole('button', { name: 'Stop' }).click();
+  await expect(page.getByText('Walking there…')).toBeHidden();
+});
+
+test('play together opens, and a wrong code is refused without going online', async ({ page }) => {
+  await play(page);
+  await page.getByRole('button', { name: 'Play together' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Play together' });
+  await expect(dialog.getByRole('button', { name: 'Open a room' })).toBeVisible();
+  await dialog.getByLabel('Room code').fill('abc');
+  await dialog.getByRole('button', { name: 'Join' }).click();
+  await expect(dialog.getByText('No room has that code.')).toBeVisible();
 });

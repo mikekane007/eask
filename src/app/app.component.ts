@@ -11,10 +11,11 @@ import {
 import { AutopilotComponent } from './ui/autopilot.component';
 import { AvatarComponent } from './ui/avatar.component';
 import { CityPickerComponent } from './ui/city-picker.component';
-import { type Engine, createEngine } from './game/engine';
+import type { Engine } from './game/engine';
 import { GameService } from './game/game.service';
 import { I18n } from './game/i18n/i18n.service';
 import { GraphicsService } from './game/graphics.service';
+import { RoomService } from './game/net/room.service';
 import { SoundService } from './game/sound.service';
 import type { City } from './game/types';
 import { GoalsComponent } from './ui/goals.component';
@@ -23,6 +24,7 @@ import { IntroComponent } from './ui/intro.component';
 import { MinimapComponent } from './ui/minimap.component';
 import { RulesComponent } from './ui/rules.component';
 import { SheetComponent } from './ui/sheet.component';
+import { TogetherComponent } from './ui/together.component';
 
 @Component({
   selector: 'app-root',
@@ -37,6 +39,7 @@ import { SheetComponent } from './ui/sheet.component';
     CityPickerComponent,
     AvatarComponent,
     AutopilotComponent,
+    TogetherComponent,
   ],
   template: `
     <div #stage></div>
@@ -55,6 +58,7 @@ import { SheetComponent } from './ui/sheet.component';
     <app-intro />
     <app-avatar />
     <app-autopilot />
+    <app-together />
     <app-rules />
     <app-city-picker />
   `,
@@ -65,6 +69,7 @@ export class AppComponent implements OnDestroy {
   private readonly zone = inject(NgZone);
   private readonly sound = inject(SoundService);
   private readonly graphics = inject(GraphicsService);
+  private readonly room = inject(RoomService);
   @ViewChild('stage', { static: true }) stage!: ElementRef<HTMLElement>;
   private engine?: Engine;
   private canvas?: HTMLCanvasElement;
@@ -109,7 +114,10 @@ export class AppComponent implements OnDestroy {
         });
       }
       if (this.stale(gen)) return;
-      const engine = await createEngine(canvas, this.svc, this.zone, city, this.sound, this.graphics);
+      // The 3D engine (and three.js, most of the code) loads only once a city is chosen, so the first screen is quick.
+      const { createEngine } = await import('./game/engine');
+      if (this.stale(gen)) return;
+      const engine = await createEngine(canvas, this.svc, this.zone, city, this.sound, this.graphics, this.room);
       if (this.stale(gen)) {
         engine.dispose();
         return;

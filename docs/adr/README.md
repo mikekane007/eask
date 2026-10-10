@@ -8,3 +8,4 @@
 | [0004](0004-light-rendering-budget.md)  | Render budget for modest hardware                  | accepted |
 | [0005](0005-cities-and-languages.md)    | Selectable cities and an English/French switch     | accepted |
 | [0006](0006-real-street-maps.md)        | Real street maps from OpenStreetMap                | accepted |
+| [0007](0007-playing-together.md)        | Playing together over Firebase                     | accepted |

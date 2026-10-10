@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { GameService } from '../game/game.service';
 import { I18n } from '../game/i18n/i18n.service';
+import { RoomService } from '../game/net/room.service';
 import { SoundService } from '../game/sound.service';
 
 @Component({
@@ -35,6 +36,14 @@ import { SoundService } from '../game/sound.service';
           {{ svc.goalsOpen() ? '‹' : '›' }}
         </button>
         <button class="btn-r" [attr.aria-label]="i18n.t('gameRules')" (click)="svc.rulesOpen.set(true)">?</button>
+        <button
+          class="btn-r"
+          [class.off]="room.status() !== 'in'"
+          [attr.aria-label]="i18n.t('togetherButton')"
+          (click)="room.menuOpen.set(true)"
+        >
+          👥
+        </button>
         <button
           class="btn-r"
           [class.off]="!svc.autopilot()"
@@ -85,6 +94,7 @@ export class HudComponent {
   readonly svc = inject(GameService);
   readonly i18n = inject(I18n);
   readonly sound = inject(SoundService);
+  readonly room = inject(RoomService);
   readonly Math = Math;
   weatherLabel = () => {
     const keys = {

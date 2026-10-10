@@ -16,6 +16,8 @@ import { createRealWorld } from './map/real-world';
 import { createTraffic } from './traffic';
 import { FrameMeter, GRAPHICS, type GraphicsLevel } from './graphics';
 import type { GraphicsService } from './graphics.service';
+import type { RoomService } from './net/room.service';
+import { createRemotePlayers } from './remote-players';
 import type { SoundService } from './sound.service';
 import { createWeatherFx } from './weather-fx';
 import type { City } from './types';
@@ -36,6 +38,7 @@ export async function createEngine(
   city: City,
   sound: SoundService,
   graphics: GraphicsService,
+  room: RoomService,
 ): Promise<Engine> {
   try {
     await Promise.race([document.fonts.load('40px Bungee'), new Promise((r) => setTimeout(r, 1500))]);
@@ -101,7 +104,8 @@ export async function createEngine(
           blocked: real.blocked,
         })
       : null;
-  const { player, npcs, S0, setAvatar: setLook } = createCharacters(scene, kit, svc, city);
+  const { player, npcs, S0, setAvatar: setLook, buildHero } = createCharacters(scene, kit, svc, city);
+  const remotes = createRemotePlayers(scene, kit, buildHero);
   let lookShown = svc.avatar();
   const input = createInput(canvas, svc, zone);
 
@@ -399,6 +403,11 @@ export async function createEngine(
       (ring.material as THREE.Material).opacity = 0.5 + 0.4 * Math.sin(now / 280 + i);
       bub.position.y = 4.7 + Math.sin(now / 350 + i) * 0.15;
     });
+    // the others in the room, and telling them where you are
+    const others = room.peers();
+    remotes.update(dt, others);
+    svc.live.peers = others;
+    if (svc.playing()) room.publish(p.x, p.z, player.rotation.y);
     svc.live.x = p.x;
     svc.live.z = p.z;
     svc.live.rot = player.rotation.y;
@@ -532,6 +541,7 @@ export async function createEngine(
       cancelAnimationFrame(raf);
       removeEventListener('resize', resize);
       input.dispose();
+      remotes.dispose();
       svc.teleport = () => undefined;
       scene.traverse((o) => {
         const m = o as THREE.Mesh;

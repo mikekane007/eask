@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_AVATAR, HAIR_COLORS, OUTFITS, SKIN_TONES, css, parseAvatar } from './avatar';
+import { DEFAULT_AVATAR, HAIR_COLORS, OUTFITS, SKIN_TONES, css, decodeLook, encodeLook, parseAvatar } from './avatar';
 
 describe('avatar', () => {
   it('has a default that is itself valid', () => {
@@ -27,5 +27,26 @@ describe('avatar', () => {
   it('formats colours for css', () => {
     expect(css(0xd7263d)).toBe('#d7263d');
     expect(css(0x000f0f)).toBe('#000f0f');
+  });
+});
+
+describe('look text', () => {
+  it('round-trips every look', () => {
+    for (const female of [false, true])
+      for (let skin = 0; skin < SKIN_TONES.length; skin++)
+        for (let hair = 0; hair < HAIR_COLORS.length; hair++)
+          for (let outfit = 0; outfit < OUTFITS.length; outfit++) {
+            const a = { female, skin, hair, outfit };
+            expect(decodeLook(encodeLook(a))).toEqual(a);
+          }
+  });
+
+  it('stays short enough for the room rules', () => {
+    expect(encodeLook({ female: true, skin: 7, hair: 5, outfit: 7 }).length).toBeLessThanOrEqual(20);
+  });
+
+  it('turns bad text into the default look', () => {
+    for (const bad of ['', 'abcd', '9999', 12, null, undefined, '14060'])
+      expect(decodeLook(bad)).toEqual(DEFAULT_AVATAR);
   });
 });

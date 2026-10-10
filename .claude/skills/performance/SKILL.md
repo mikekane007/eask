@@ -35,3 +35,7 @@ it runs well everywhere.
 - 2026-10-10: Detail is now data: `GRAPHICS[level]` in `graphics.ts`. Anything that scales with load (trees, vehicles, walkers,
   raindrops, shadows, resolution) must read its limit from there and expose a `setLimit`/`setDrops`/`setTreeShare`, so Low can really
   be lighter. New heavy features need an entry in all three levels and a test that Low < Medium <= High. Auto lowers by itself.
+- 2026-10-10: The 3D engine is a lazy chunk (`await import('./game/engine')` in `app.component.ts`). Anything that imports
+  three.js must stay inside the engine tree, or three.js lands back in the first download. The 1 MB initial budget had
+  been broken for several commits because CI results were not checked after pushing: always run `gh run list` after a push.
+- 2026-10-10: Firebase is loaded only on Open a room / Join (dynamic imports in `net/firebase-room.ts`). Keep it that way.

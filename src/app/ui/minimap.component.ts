@@ -112,6 +112,17 @@ export class MinimapComponent implements OnInit, OnDestroy {
       g.fill();
     }
 
+    // friends in the room: blue dots with their names
+    g.textAlign = 'center';
+    for (const f of live.peers) {
+      g.beginPath();
+      g.arc(X(f.x), Z(f.z), 3.6, 0, Math.PI * 2);
+      g.fillStyle = '#4aa3ff';
+      g.fill();
+      g.fillStyle = '#cfe6ff';
+      g.fillText(f.name, X(f.x), Z(f.z) - 7);
+    }
+
     // you: a white arrow pointing the way you face
     g.save();
     g.translate(X(live.x), Z(live.z));

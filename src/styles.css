@@ -893,3 +893,34 @@ button:focus-visible {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Playing together */
+.room-code b {
+  display: block;
+  font: 400 40px/1.1 var(--display);
+  letter-spacing: 0.18em;
+  color: var(--gold);
+}
+.room-list {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 8px;
+  color: var(--paper);
+  font-weight: 700;
+}
+.reply.wide {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 4px;
+}
+.reply.code {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.mbtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.why[role='alert'] {
+  color: var(--red);
+}

@@ -52,3 +52,12 @@ export function parseAvatar(raw: unknown): Avatar {
 
 /** CSS colour for the preview and swatches. */
 export const css = (hex: number): string => '#' + hex.toString(16).padStart(6, '0');
+
+/** A short text form of a look, such as "1406", so other players' games can draw the same character. */
+export const encodeLook = (a: Avatar): string => `${a.female ? 1 : 0}${a.skin}${a.hair}${a.outfit}`;
+
+/** The look for a text made by encodeLook. Anything else gives the default look rather than an error. */
+export function decodeLook(s: unknown): Avatar {
+  if (typeof s !== 'string' || !/^[01]\d{3}$/.test(s)) return DEFAULT_AVATAR;
+  return parseAvatar({ female: s.startsWith('1'), skin: Number(s[1]), hair: Number(s[2]), outfit: Number(s[3]) });
+}
