@@ -1,12 +1,47 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Engine, createEngine } from './game/engine';
+import { GameService } from './game/game.service';
+import { GoalsComponent } from './ui/goals.component';
+import { HudComponent } from './ui/hud.component';
+import { IntroComponent } from './ui/intro.component';
+import { SheetComponent } from './ui/sheet.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  standalone: true,
+  imports: [HudComponent, GoalsComponent, SheetComponent, IntroComponent],
+  template: `
+    <canvas #c id="c"></canvas>
+    <app-hud />
+    <app-goals />
+    <app-sheet />
+    @if (svc.toastMsg(); as msg) {
+      <div class="toast" [style.opacity]="svc.toastFading() ? 0 : 1">{{ msg }}</div>
+    }
+    @if (svc.joy(); as j) {
+      <div class="joy" [style.left.px]="j.x" [style.top.px]="j.y"><i [style.transform]="'translate(' + j.dx * 45 + 'px,' + j.dy * 45 + 'px)'"></i></div>
+    }
+    <app-intro />
+  `,
 })
-export class AppComponent {
-  title = 'go-and-tell';
+export class AppComponent implements OnInit, OnDestroy {
+  readonly svc = inject(GameService);
+  private zone = inject(NgZone);
+  @ViewChild('c', { static: true }) canvas!: ElementRef<HTMLCanvasElement>;
+  private engine?: Engine;
+  private destroyed = false;
+
+  ngOnInit(): void {
+    this.zone.runOutsideAngular(async () => {
+      const engine = await createEngine(this.canvas.nativeElement, this.svc, this.zone);
+      if (this.destroyed) { engine.dispose(); return; }
+      this.engine = engine;
+      engine.start();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    this.engine?.dispose();
+  }
 }

@@ -21,3 +21,4 @@ export const OUTCOMES: Record<OutcomeId, { label: string; cls: string; rank: num
 };
 
 export const VERDICT = { good: 'Wise answer', ok: 'Partly there', bad: 'Missed it' } as const;
+export type { Quality } from './people.data';
