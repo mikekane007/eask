@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { GameService } from '../game/game.service';
 import { I18n } from '../game/i18n/i18n.service';
+import { SoundService } from '../game/sound.service';
 
 @Component({
   selector: 'app-hud',
@@ -38,6 +39,15 @@ import { I18n } from '../game/i18n/i18n.service';
           M
         </button>
         <button
+          class="btn-r"
+          [class.off]="sound.muted()"
+          [attr.aria-label]="sound.muted() ? i18n.t('soundOff') : i18n.t('soundOn')"
+          [attr.aria-pressed]="!sound.muted()"
+          (click)="sound.toggleMute()"
+        >
+          ♪
+        </button>
+        <button
           class="btn-r small"
           [attr.aria-label]="i18n.t('language')"
           (click)="i18n.setLang(i18n.lang() === 'en' ? 'fr' : 'en')"
@@ -65,6 +75,7 @@ import { I18n } from '../game/i18n/i18n.service';
 export class HudComponent {
   readonly svc = inject(GameService);
   readonly i18n = inject(I18n);
+  readonly sound = inject(SoundService);
   readonly Math = Math;
   weatherLabel = () => {
     const keys = {

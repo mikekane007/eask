@@ -67,3 +67,7 @@ button or by editing the saved state) when touching lights or emissive materials
   two legs, so about 36 people cost four draw calls. They walk rectangular pavement loops inside each block, follow
   daily routines and go indoors in rain. They are scenery only: named people (conversations) are separate objects.
   Hidden people are scaled to zero, not removed. Never create per-person meshes for the crowd.
+- 2026-10-10: Sound is generated with the Web Audio API in `SoundService` (no audio files). The loudness decisions are in
+  the pure `sound-mix.ts` (tested, with a total-level budget so a storm plus a crowd cannot clip). The audio context is only
+  created inside a user gesture; until then every call is a quiet no-op. Update the mix a few times a second, never per frame.
+  Check it headlessly by reading the gain values from `window.ng.getComponent(root).sound.graph`.

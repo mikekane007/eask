@@ -10,6 +10,7 @@ import { H, markerPos } from './layout';
 import { createLighting } from './lighting';
 import { createPedestrians } from './pedestrians';
 import { createTraffic } from './traffic';
+import type { SoundService } from './sound.service';
 import { createWeatherFx } from './weather-fx';
 import type { City } from './types';
 export interface Engine {
@@ -27,6 +28,7 @@ export async function createEngine(
   svc: GameService,
   zone: NgZone,
   city: City,
+  sound: SoundService,
 ): Promise<Engine> {
   try {
     await Promise.race([document.fonts.load('40px Bungee'), new Promise((r) => setTimeout(r, 1500))]);
@@ -103,6 +105,11 @@ export async function createEngine(
     solids.some((s) => x > s.x0 - r && x < s.x1 + r && z > s.z0 - r && z < s.z1 + r);
 
   let hourShown = -1;
+  let lastStep = 0;
+  let lastHour = svc.state().hour;
+  let audioClock = 0;
+  const churchPlace = city.places.find((pl) => pl.id === 'church');
+  const churchAt = churchPlace ? markerPos(churchPlace) : null;
   let running = false,
     raf = 0,
     last = performance.now(),
@@ -175,6 +182,11 @@ export async function createEngine(
         player.rotation.y = Math.atan2(mx, mz);
         walkT += dt * 10;
         const sw = Math.sin(walkT);
+        const stepNo = Math.floor(walkT / Math.PI);
+        if (stepNo !== lastStep) {
+          lastStep = stepNo;
+          sound.step(fx.wx.rain);
+        }
         const legs = player.userData['legs'] as THREE.Group[],
           arms = player.userData['arms'] as THREE.Group[];
         legs[0].rotation.x = sw * 0.6;
@@ -332,6 +344,28 @@ export async function createEngine(
       Math.max(0.5, 1 - 0.2 * wx.rain - 0.25 * wx.fog),
     );
     crowd.update(dt, st.hour + st.minute / 60, wx.rain);
+
+    // Sound: the ambient mix a few times a second, and the church bell on the hour.
+    audioClock += realDt;
+    if (audioClock > 0.25) {
+      if (svc.playing()) {
+        sound.update(
+          {
+            hour: st.hour + st.minute / 60,
+            rain: wx.rain,
+            fog: wx.fog,
+            trafficNear: traffic.nearCount(p, 55),
+            crowdNear: crowd.nearCount(p, 40),
+          },
+          audioClock,
+        );
+      } else sound.silence();
+      audioClock = 0;
+    }
+    if (st.hour !== lastHour) {
+      if (svc.playing() && churchAt) sound.bell(st.hour, Math.hypot(p.x - churchAt.x, p.z - churchAt.z));
+      lastHour = st.hour;
+    }
     camT.set(p.x, 19 * svc.zoom(), p.z + 21 * svc.zoom());
     if (!camInit) {
       cam.position.copy(camT);

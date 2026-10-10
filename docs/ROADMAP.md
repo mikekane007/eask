@@ -12,11 +12,11 @@ Legend: ✅ done · 🔄 in progress · ⏳ planned · ⏸ waiting on owner
 - ✅ 1.2 Weather: clear, cloudy, rain, fog, by day and city; rain particles, light and fog change
 - ✅ 1.3 Traffic: cars and buses on every road, traffic lights, vehicles yield to the player
 - ✅ 1.4 Pedestrians: a crowd with daily routines (commute, lunch, evening, night), drawn with instancing
-- 🔄 1.5 Sound: generated in the browser (no audio files): ambience, rain, traffic, birds, footsteps, bells, mute
+- ✅ 1.5 Sound: generated in the browser (no audio files): ambience, rain, traffic, birds, footsteps, bells, mute
 
 ## Phase 2: A real place
 
-- ⏳ 2.1 Pilot: a real Lille neighbourhood from OpenStreetMap (streets and building footprints), loaded on demand
+- 🔄 2.1 Pilot: a real Lille neighbourhood from OpenStreetMap (streets and building footprints), loaded on demand
 - ⏳ 2.2 Chunked world: build only what is near the player, reuse meshes, level of detail
 - ⏳ 2.3 Roll out to Paris and Douai; Accra if good map data exists
 

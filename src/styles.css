@@ -701,3 +701,7 @@ button:focus-visible {
   height: 100%;
   display: block;
 }
+.btn-r.off {
+  opacity: 0.45;
+  text-decoration: line-through;
+}

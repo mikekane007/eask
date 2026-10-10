@@ -178,6 +178,14 @@ export function createTraffic(scene: THREE.Scene, kit: Kit, theme: CityTheme) {
 
   return {
     vehicles,
+    /** How many vehicles on the road are within `radius` metres of `p` (for sound). */
+    nearCount(p: THREE.Vector3, radius: number): number {
+      let n = 0;
+      for (const v of vehicles) {
+        if (v.obj.visible && v.obj.position.distanceToSquared(p) < radius * radius) n++;
+      }
+      return n;
+    },
     /**
      * Advances every vehicle.
      * @param t seconds of play time (drives the signals)

@@ -1,8 +1,9 @@
 import { Component, computed, inject } from '@angular/core';
 import { GameService, type Talk } from '../game/game.service';
 import { I18n } from '../game/i18n/i18n.service';
+import { SoundService } from '../game/sound.service';
 import { OUTCOMES, VERDICT_KEY } from '../game/state';
-import type { Person, Place, PlaceOption, Quality } from '../game/types';
+import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types';
 
 @Component({
   selector: 'app-sheet',
@@ -29,7 +30,7 @@ import type { Person, Place, PlaceOption, Quality } from '../game/types';
                 <div class="bubble">{{ i18n.tr(t.P.rounds[t.round].q) }}</div>
                 <div class="opts">
                   @for (a of t.choices; track $index; let i = $index) {
-                    <button class="opt" [id]="'ans-' + t.round + '-' + i" (click)="svc.answer(a)">
+                    <button class="opt" [id]="'ans-' + t.round + '-' + i" (click)="pick(a)">
                       <span>{{ i18n.tr(a[0]) }}</span>
                     </button>
                   }
@@ -143,6 +144,12 @@ import type { Person, Place, PlaceOption, Quality } from '../game/types';
 export class SheetComponent {
   readonly svc = inject(GameService);
   readonly i18n = inject(I18n);
+  private readonly sound = inject(SoundService);
+
+  pick(a: Answer): void {
+    this.svc.answer(a);
+    this.sound.verdict(a[1]);
+  }
   readonly verdictKey = VERDICT_KEY;
   readonly outcomes = OUTCOMES;
   readonly icon: Record<Quality, string> = { good: '✓', ok: '~', bad: '✗' };

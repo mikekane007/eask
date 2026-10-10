@@ -12,6 +12,7 @@ import { CityPickerComponent } from './ui/city-picker.component';
 import { type Engine, createEngine } from './game/engine';
 import { GameService } from './game/game.service';
 import { I18n } from './game/i18n/i18n.service';
+import { SoundService } from './game/sound.service';
 import type { City } from './game/types';
 import { GoalsComponent } from './ui/goals.component';
 import { HudComponent } from './ui/hud.component';
@@ -55,6 +56,7 @@ export class AppComponent implements OnDestroy {
   readonly svc = inject(GameService);
   private readonly i18n = inject(I18n);
   private readonly zone = inject(NgZone);
+  private readonly sound = inject(SoundService);
   @ViewChild('stage', { static: true }) stage!: ElementRef<HTMLElement>;
   private engine?: Engine;
   private canvas?: HTMLCanvasElement;
@@ -90,7 +92,7 @@ export class AppComponent implements OnDestroy {
     this.canvas = canvas;
 
     void this.zone.runOutsideAngular(async () => {
-      const engine = await createEngine(canvas, this.svc, this.zone, city);
+      const engine = await createEngine(canvas, this.svc, this.zone, city, this.sound);
       if (this.destroyed || gen !== this.generation) {
         engine.dispose();
         return;

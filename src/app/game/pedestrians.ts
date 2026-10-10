@@ -28,6 +28,9 @@ interface Walker {
   /** Metres until the next stop to chat or look around, and how long that stop lasts. */
   stopIn: number;
   pause: number;
+  /** Where they were last drawn. */
+  x: number;
+  z: number;
 }
 
 /** A background crowd that follows daily routines, walks the pavements and goes indoors in the rain. */
@@ -65,6 +68,8 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
       phase: rnd() * 6.28,
       stopIn: 5 + rnd() * 30,
       pause: 0,
+      x: 0,
+      z: 0,
     });
     torso.setColorAt(n, toLinear(SHIRTS[Math.floor(rnd() * SHIRTS.length)]));
     head.setColorAt(n, toLinear(theme.skins[Math.floor(rnd() * theme.skins.length)]));
@@ -92,6 +97,14 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
   return {
     get visibleCount() {
       return visible;
+    },
+    /** How many people out and about are within `radius` metres of `p` (for sound). */
+    nearCount(p: THREE.Vector3, radius: number): number {
+      let n = 0;
+      for (const w of walkers) {
+        if (w.vis > 0.5 && (w.x - p.x) ** 2 + (w.z - p.z) ** 2 < radius * radius) n++;
+      }
+      return n;
     },
     /**
      * @param hour fractional clock hour
@@ -128,6 +141,8 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
         const heading = p.dir > 0 ? pt.heading : pt.heading + Math.PI;
         const x = bMin(p.i) + INSET + pt.x;
         const z = bMin(p.j) + INSET + pt.z;
+        p.x = x;
+        p.z = z;
         const bob = walking ? Math.abs(Math.sin(p.phase)) * 0.04 : 0;
         const swing = walking ? Math.sin(p.phase) * 0.7 : 0;
         const s = p.vis;
