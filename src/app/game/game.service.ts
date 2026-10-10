@@ -2,6 +2,7 @@ import { Injectable, NgZone, computed, inject, signal } from '@angular/core';
 import { CITIES, getCity } from './cities';
 import { I18n } from './i18n/i18n.service';
 import { markerPos } from './layout';
+import { type Weather, weatherAt } from './weather';
 import { FRESH, type GameState, OUTCOMES, type OutcomeId } from './state';
 import type { Answer, Person, Place, PlaceOption, Quality } from './types';
 
@@ -56,6 +57,13 @@ export class GameService {
   readonly places = computed(() => this.city()?.places ?? []);
 
   readonly state = signal<GameState>(freshState());
+  /** The current weather, worked out from the city, the day and the hour. */
+  readonly weather = computed<Weather>(() => {
+    const c = this.city();
+    if (!c) return 'clear';
+    const s = this.state();
+    return weatherAt(c.id, c.climate, s.day, s.hour);
+  });
   readonly hasSave = signal(false);
   readonly playing = signal(false);
   readonly goalsOpen = signal(false);

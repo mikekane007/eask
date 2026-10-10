@@ -8,6 +8,7 @@ import { createInput } from './input';
 import { createKit } from './kit';
 import { H, T, markerPos, roadC } from './layout';
 import { createLighting } from './lighting';
+import { createWeatherFx } from './weather-fx';
 import type { City } from './types';
 export interface Engine {
   start(): void;
@@ -40,7 +41,8 @@ export async function createEngine(
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0xcfe3ea, 70, 200);
+  const fog = new THREE.Fog(0xcfe3ea, 70, 200);
+  scene.fog = fog;
   const cam = new THREE.PerspectiveCamera(42, 1, 0.5, 900);
   const amb = new THREE.HemisphereLight(0xdfefff, 0x8a5236, 0.75);
   scene.add(amb);
@@ -65,9 +67,10 @@ export async function createEngine(
   const kit = createKit(scene);
   const lighting = createLighting(scene);
   const { skyU, sky, LT, CUR, setTimeTarget, snapLight } = lighting;
+  const fx = createWeatherFx(scene);
   const builders = createBuilders(scene, kit, city.theme);
   const world = createCity(scene, kit, builders, city);
-  const { solids, markers, beams, smoke, clouds } = world;
+  const { solids, markers, beams, smoke, clouds, ground } = world;
   const { facadeMats, lampGlows } = builders;
   const { player, npcs, tros, S0 } = createCharacters(scene, kit, svc, city);
   const input = createInput(canvas, svc, zone);
@@ -106,6 +109,18 @@ export async function createEngine(
     camL = new THREE.Vector3(S0.x, 1, S0.z - 2);
   const tmpV = new THREE.Vector3(),
     white = new THREE.Color(1, 1, 1);
+  const grey = new THREE.Color(),
+    skyT = new THREE.Color(),
+    skyB = new THREE.Color();
+  /** A copy of `src` pulled toward grey by `amt` and darkened by `dim` (used for overcast skies). */
+  const dull = (src: THREE.Color, out: THREE.Color, amt: number, dim: number) => {
+    const l = src.r * 0.299 + src.g * 0.587 + src.b * 0.114;
+    grey.setRGB(l, l, l);
+    return out
+      .copy(src)
+      .lerp(grey, amt)
+      .multiplyScalar(1 - dim);
+  };
 
   // Frame budget: 30 fps while playing, 10 fps behind the intro, nothing while the tab is hidden.
   // This keeps CPU/GPU use low on laptops with integrated graphics.
@@ -276,12 +291,18 @@ export async function createEngine(
     CUR.amb += (LT.amb - CUR.amb) * k;
     CUR.sunI += (LT.sunI - CUR.sunI) * k;
     CUR.night += (LT.night - CUR.night) * k;
-    skyU.top.value.copy(CUR.top);
-    skyU.bot.value.copy(CUR.bot);
-    scene.fog!.color.copy(CUR.bot).convertSRGBToLinear();
-    amb.intensity = CUR.amb;
+    // Weather greys and dims the sky, thickens the fog and covers the sun.
+    fx.ease(svc.weather(), Math.min(0.25, realDt));
+    const wx = fx.wx;
+    const greyAmt = Math.min(1, wx.dark * 1.7);
+    skyU.top.value.copy(dull(CUR.top, skyT, greyAmt, wx.dark * 0.25));
+    skyU.bot.value.copy(dull(CUR.bot, skyB, greyAmt, wx.dark * 0.25));
+    fog.color.copy(skyB).convertSRGBToLinear();
+    fog.near = 70 - 62 * Math.min(1, wx.fog);
+    fog.far = 200 - 140 * Math.min(1, wx.fog);
+    amb.intensity = CUR.amb * (1 + 0.12 * wx.dark);
     amb.color.copy(CUR.top).lerp(white, 0.6).convertSRGBToLinear();
-    sun.intensity = CUR.sunI;
+    sun.intensity = CUR.sunI * (1 - 0.6 * wx.dark);
     sun.color.copy(CUR.sunC).convertSRGBToLinear();
     sun.position.set(p.x + CUR.sunP.x, CUR.sunP.y, p.z + CUR.sunP.z);
     sun.target.position.set(p.x, 0, p.z);
@@ -293,8 +314,11 @@ export async function createEngine(
       (gl.material as THREE.Material).opacity = nf * ((gl as THREE.Sprite).isSprite ? 0.95 : 0.55);
     });
     clouds.forEach((c) => {
-      c.material.opacity = 0.85 * (1 - nf * 0.8);
+      c.material.opacity = 0.85 * (1 - nf * 0.8) * wx.cloud;
+      c.material.color.setScalar(1 - 0.5 * wx.dark);
     });
+    ground.material.color.setScalar(1 - 0.28 * wx.rain);
+    fx.update(dt, p, nf);
     tros.forEach((g) => {
       const u = g.userData;
       u['t'] = (u['t'] + u['speed'] * dt) % T;

@@ -30,6 +30,8 @@ export const DOUAI: City = {
     skins: [SKIN.fair, SKIN.light, SKIN.fair, SKIN.olive, SKIN.light, SKIN.fair],
     waxPrint: false,
   },
+  // Rough share of six-hour blocks with each weather.
+  climate: { clear: 0.2, cloudy: 0.36, rain: 0.3, fog: 0.14 },
   places: [
     {
       id: 'church',

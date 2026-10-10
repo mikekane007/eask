@@ -1,4 +1,5 @@
 import type { Side } from './layout';
+import type { Climate } from './weather';
 
 /** Text that may be translated. A plain string is shown as-is in every language; `fr` falls back to `en`. */
 export type L10n = string | { en: string; fr?: string };
@@ -80,6 +81,8 @@ export interface City {
   /** False while the content is an unreviewed draft. Shown to the player. */
   reviewed: boolean;
   theme: CityTheme;
+  /** How often each kind of weather happens here. */
+  climate: Climate;
   places: Place[];
   people: Person[];
 }

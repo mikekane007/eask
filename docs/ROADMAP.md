@@ -9,8 +9,8 @@ Legend: ✅ done · 🔄 in progress · ⏳ planned · ⏸ waiting on owner
 ## Phase 1: A living street
 
 - ✅ 1.1 Ambient clock: time passes while you walk (about 3 real minutes per game hour); HH:MM on the HUD
-- 🔄 1.2 Weather: clear, cloudy, rain, fog, by day and city; rain particles, light and fog change
-- ⏳ 1.3 Traffic: cars and buses on every road, traffic lights, vehicles yield to the player
+- ✅ 1.2 Weather: clear, cloudy, rain, fog, by day and city; rain particles, light and fog change
+- 🔄 1.3 Traffic: cars and buses on every road, traffic lights, vehicles yield to the player
 - ⏳ 1.4 Pedestrians: a crowd with daily routines (commute, lunch, evening, night), drawn with instancing
 - ⏳ 1.5 Sound: generated in the browser (no audio files): ambience, rain, traffic, birds, footsteps, bells, mute
 

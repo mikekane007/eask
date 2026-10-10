@@ -26,7 +26,7 @@ import { I18n } from '../game/i18n/i18n.service';
         </div>
         <div class="clock">
           <b>{{ pad(svc.state().hour) }}:{{ pad(svc.state().minute) }}</b
-          ><span>{{ i18n.t('day', { n: svc.state().day }) }}</span>
+          ><span>{{ i18n.t('day', { n: svc.state().day }) }} · {{ weatherLabel() }}</span>
         </div>
       </div>
       <div class="side">
@@ -66,6 +66,15 @@ export class HudComponent {
   readonly svc = inject(GameService);
   readonly i18n = inject(I18n);
   readonly Math = Math;
+  weatherLabel = () => {
+    const keys = {
+      clear: 'weatherClear',
+      cloudy: 'weatherCloudy',
+      rain: 'weatherRain',
+      fog: 'weatherFog',
+    } as const;
+    return this.i18n.t(keys[this.svc.weather()]);
+  };
   round = (n: number) => Math.round(n);
   pad = (n: number) => String(n).padStart(2, '0');
 }

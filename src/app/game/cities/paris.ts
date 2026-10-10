@@ -30,6 +30,8 @@ export const PARIS: City = {
     skins: [SKIN.fair, SKIN.olive, SKIN.deep, SKIN.light, SKIN.tan, SKIN.darker],
     waxPrint: false,
   },
+  // Rough share of six-hour blocks with each weather.
+  climate: { clear: 0.3, cloudy: 0.35, rain: 0.25, fog: 0.1 },
   places: [
     {
       id: 'church',

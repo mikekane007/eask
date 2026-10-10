@@ -30,6 +30,8 @@ export const ACCRA: City = {
     skins: [0x5b3a24, SKIN.darker, SKIN.deep, SKIN.darkest],
     waxPrint: true,
   },
+  // Rough share of six-hour blocks with each weather.
+  climate: { clear: 0.42, cloudy: 0.26, rain: 0.28, fog: 0.04 },
   places: [
     {
       id: 'church',

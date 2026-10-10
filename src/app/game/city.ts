@@ -321,5 +321,5 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders, cit
     scene.add(s);
     clouds.push(s);
   }
-  return { solids, markers, beams, smoke, clouds };
+  return { solids, markers, beams, smoke, clouds, ground };
 }

@@ -30,6 +30,8 @@ export const LILLE: City = {
     skins: [SKIN.fair, SKIN.light, SKIN.olive, SKIN.brown, SKIN.fair, SKIN.tan],
     waxPrint: false,
   },
+  // Rough share of six-hour blocks with each weather.
+  climate: { clear: 0.22, cloudy: 0.36, rain: 0.3, fog: 0.12 },
   places: [
     {
       id: 'church',
