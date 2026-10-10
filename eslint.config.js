@@ -33,9 +33,9 @@ export default tseslint.config(
     },
   },
   {
-    // The 3D engine is a large closure around an untyped-ish library; keep the rules that
+    // The 3D engine modules wrap an untyped-ish library; keep the rules that
     // matter for correctness and relax the ones that only add noise there.
-    files: ['src/app/game/engine.ts'],
+    files: ['src/app/game/{engine,kit,lighting,builders,city,characters,input}.ts'],
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unnecessary-condition': 'off',

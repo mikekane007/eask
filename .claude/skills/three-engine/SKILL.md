@@ -5,9 +5,19 @@ description: Work on the Go and Tell 3D street in src/app/game/engine.ts - scene
 
 # three.js engine
 
-`createEngine(canvas, svc, zone)` in `src/app/game/engine.ts` builds everything inside one closure and
-returns `{ start, resize, dispose }`. It reads `GameService` signals each frame and writes back only
-`svc.current`, `svc.joy` and the saved position.
+`createEngine(canvas, svc, zone)` in `src/app/game/engine.ts` owns the renderer, camera, sun and the
+render loop, and returns `{ start, resize, dispose }`. It reads `GameService` signals each frame and
+writes back only `svc.current`, `svc.joy` and the saved position. The world is built by modules that
+each export one `create*` function taking the scene (and the shared kit):
+
+| Module          | Holds                                                                              |
+| --------------- | ---------------------------------------------------------------------------------- |
+| `kit.ts`        | materials `M`, `mesh`, `box`, canvas textures `TX`, signs, seeded `rnd`, `ringMat` |
+| `lighting.ts`   | sky dome, day/night tables, `setTimeTarget`, `snapLight`                           |
+| `builders.ts`   | buildings, palms, trees, umbrellas, poles, wires                                   |
+| `city.ts`       | ground, blocks, landmarks, clouds; returns `solids` and animated parts             |
+| `characters.ts` | player, the ten people, tro-tros                                                   |
+| `input.ts`      | keyboard state and the drag joystick; has its own `dispose()`                      |
 
 ## Layout facts
 
@@ -42,3 +52,6 @@ button or by editing the saved state) when touching lights or emissive materials
 - 2026-10-10: The "Back to the street" button sets `current` to null; the next frame re-detects
   proximity and reopens the sheet if the player is still standing there. This matches the original
   game - do not "fix" it without asking.
+- 2026-10-10: The engine was split mechanically (code copied by line range into `create*` functions),
+  so module bodies still use the original closure style. Verified identical in the browser. New
+  world pieces go in the module that owns that concern, and shared helpers go through `kit`.

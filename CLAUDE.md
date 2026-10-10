@@ -37,9 +37,9 @@ at a time, never the e2e suite with many workers locally, never `taskkill /IM no
 
 ## Backlog (pick the first unchecked)
 
-- [ ] Split `engine.ts` into modules (textures, builders, city, characters, loop)
-- [ ] Unit tests for `GameService` (talk flow, faint, opening hours, save/load) with Vitest or Karma
-- [ ] Playwright smoke test: intro, walk to Grace Chapel, study, talk to Kwame
+- [x] Split `engine.ts` into modules (kit, lighting, builders, city, characters, input, loop)
+- [x] Unit tests for `GameService` (Vitest)
+- [~] Playwright smoke tests written (intro, sleep, reload, people panel); still to add: walk to Grace Chapel, study, talk to Kwame. Not yet run locally; run in CI
 - [ ] Keyboard/screen-reader pass on the sheet (focus the first option when it opens)
 - [ ] Sound: footsteps, ambient street (needs owner approval for any assets)
 - [ ] Deploy (ask the owner first: host, domain, cost)
