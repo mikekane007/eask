@@ -42,3 +42,5 @@ testem.log
 Thumbs.db
 
 .playwright-mcp/
+playwright-report
+test-results

@@ -1,7 +1,7 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Answer, PEOPLE, Person } from './people.data';
-import { HOME, PLACES, Place, PlaceOption, markerPos } from './places.data';
-import { FRESH, GameState, OUTCOMES, OutcomeId, Quality } from './state';
+import { type Answer, PEOPLE, type Person } from './people.data';
+import { HOME, PLACES, type Place, type PlaceOption, markerPos } from './places.data';
+import { FRESH, type GameState, OUTCOMES, type OutcomeId, type Quality } from './state';
 
 const STORAGE_KEY = 'goandtell';
 
@@ -44,7 +44,7 @@ export class GameService {
   readonly joy = signal<{ x: number; y: number; dx: number; dy: number } | null>(null);
 
   /** Set by the 3D engine so the service can move the player. */
-  teleport: (x: number, z: number) => void = () => {};
+  teleport: (x: number, z: number) => void = () => undefined;
 
   readonly sheetVisible = computed(() => this.talking() !== null || this.current() !== null);
   readonly accuracy = computed(() => {
@@ -52,7 +52,7 @@ export class GameService {
     return s.total ? Math.round((s.good / s.total) * 100) + '%' : '–';
   });
   readonly met = computed(() => Object.keys(this.state().best).length);
-  readonly won = computed(() => Object.values(this.state().best).filter(v => v === 'open').length);
+  readonly won = computed(() => Object.values(this.state().best).filter((v) => v === 'open').length);
 
   private toastTimer?: ReturnType<typeof setTimeout>;
   private toastTimer2?: ReturnType<typeof setTimeout>;
@@ -60,12 +60,16 @@ export class GameService {
   private load(): GameState {
     let s: GameState = { ...FRESH, best: {} };
     try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null');
+      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as Partial<GameState> | null;
       if (raw && typeof raw.word === 'number') {
         s = { ...s, ...raw };
-        queueMicrotask(() => this.hasSave.set(true));
+        queueMicrotask(() => {
+          this.hasSave.set(true);
+        });
       }
-    } catch { /* storage unavailable */ }
+    } catch {
+      /* storage unavailable */
+    }
     if (!s.x && !s.z) {
       const m = markerPos(HOME);
       s.x = m.x + 1.5;
@@ -75,19 +79,25 @@ export class GameService {
   }
 
   save(): void {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state())); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state()));
+    } catch {
+      /* ignore */
+    }
   }
 
   patch(p: Partial<GameState>): void {
-    this.state.update(s => ({ ...s, ...p }));
+    this.state.update((s) => ({ ...s, ...p }));
   }
 
   /** Called every few seconds by the engine while walking. */
   setPosition(x: number, z: number): void {
-    this.state.update(s => ({ ...s, x, z }));
+    this.state.update((s) => ({ ...s, x, z }));
   }
 
-  start(): void { this.playing.set(true); }
+  start(): void {
+    this.playing.set(true);
+  }
 
   reset(): void {
     const m = markerPos(HOME);
@@ -106,7 +116,9 @@ export class GameService {
     this.toastFading.set(false);
     this.toastTimer = setTimeout(() => {
       this.toastFading.set(true);
-      this.toastTimer2 = setTimeout(() => this.toastMsg.set(null), 300);
+      this.toastTimer2 = setTimeout(() => {
+        this.toastMsg.set(null);
+      }, 300);
     }, 2600);
   }
 
@@ -115,7 +127,10 @@ export class GameService {
     s = { ...s };
     for (let i = 0; i < h; i++) {
       s.hour++;
-      if (s.hour >= 24) { s.hour = 0; s.day++; }
+      if (s.hour >= 24) {
+        s.hour = 0;
+        s.day++;
+      }
       s.body = clamp(s.body - 1.5);
       s.word = clamp(s.word - 0.2);
     }
@@ -123,7 +138,7 @@ export class GameService {
   }
 
   private faint(): void {
-    this.state.update(s => this.passHours({ ...s, body: 45 }, 10));
+    this.state.update((s) => this.passHours({ ...s, body: 45 }, 10));
     const m = markerPos(HOME);
     this.teleport(m.x, m.z);
     this.toast('You collapsed from exhaustion and woke up at home. Rest and eat!');
@@ -132,7 +147,8 @@ export class GameService {
   // ---------- places ----------
   placeClosedReason(o: PlaceOption, L: Place): string {
     const s = this.state();
-    const open = L.open!;
+    const open = L.open;
+    if (!open) return '';
     if (open[1] - open[0] < 24 && !(s.hour >= open[0] && s.hour < open[1])) {
       return 'Closed now, opens ' + String(open[0]).padStart(2, '0') + ':00';
     }
@@ -142,10 +158,10 @@ export class GameService {
 
   usePlaceOption(o: PlaceOption): void {
     if (o.sleep) {
-      this.state.update(s => ({ ...s, body: 100, day: s.hour >= 7 ? s.day + 1 : s.day, hour: 7 }));
+      this.state.update((s) => ({ ...s, body: 100, day: s.hour >= 7 ? s.day + 1 : s.day, hour: 7 }));
       this.toast('Rested. Day ' + this.state().day + '. Go and tell!');
     } else {
-      this.state.update(s => {
+      this.state.update((s) => {
         s = this.passHours(s, o.h ?? 0);
         return { ...s, body: clamp(s.body + (o.body ?? 0)), word: clamp(s.word + (o.word ?? 0)) };
       });
@@ -158,7 +174,8 @@ export class GameService {
   // ---------- conversations ----------
   approachBlock(P: Person): string {
     const s = this.state();
-    if (s.word < P.req) return `You don't feel ready for this conversation yet. Study at Grace Chapel until your Word reaches ${P.req}.`;
+    if (s.word < P.req)
+      return `You don't feel ready for this conversation yet. Study at Grace Chapel until your Word reaches ${P.req}.`;
     if (s.hour < 7 || s.hour >= 21) return 'It is too late to stop people on the street. Come back after 07:00.';
     if (s.body < 15) return 'You are too tired. Eat or rest first.';
     return '';
@@ -173,7 +190,7 @@ export class GameService {
   }
 
   startTalk(P: Person): void {
-    this.state.update(s => {
+    this.state.update((s) => {
       s = this.passHours(s, 1);
       return { ...s, body: clamp(s.body - 8) };
     });
@@ -185,7 +202,7 @@ export class GameService {
     if (!t) return;
     const q = a[1];
     const open = Math.max(0, Math.min(100, t.open + { good: 18, ok: 3, bad: -25 }[q]));
-    this.state.update(s => ({
+    this.state.update((s) => ({
       ...s,
       total: s.total + 1,
       good: s.good + (q === 'good' ? 1 : 0),
@@ -202,7 +219,10 @@ export class GameService {
   next(): void {
     const t = this.talking();
     if (!t) return;
-    if (this.isLastRound(t)) { this.finish(t); return; }
+    if (this.isLastRound(t)) {
+      this.finish(t);
+      return;
+    }
     const round = t.round + 1;
     this.talking.set({ ...t, round, phase: 'question', picked: undefined, choices: shuffle(t.P.rounds[round].a) });
   }
@@ -212,7 +232,7 @@ export class GameService {
     const out: OutcomeId = open <= 0 ? 'away' : open >= 80 ? 'open' : open >= 45 ? 'seed' : 'away';
     const prev = this.state().best[P.id];
     if (!prev || OUTCOMES[out].rank > OUTCOMES[prev].rank) {
-      this.state.update(s => ({ ...s, best: { ...s.best, [P.id]: out } }));
+      this.state.update((s) => ({ ...s, best: { ...s.best, [P.id]: out } }));
     }
     const message = {
       open: `${P.name} wants to know Jesus. You prayed together and swapped numbers so you can read the Bible with them this week.`,
@@ -222,8 +242,10 @@ export class GameService {
     this.talking.set({ ...t, phase: 'result', outcome: out, message });
     if (this.state().body <= 0) this.faint();
     this.save();
-    if (PEOPLE.every(p => this.state().best[p.id] === 'open')) {
-      setTimeout(() => this.toast('Everyone on your street has heard the gospel. Well done, good and faithful servant!'), 600);
+    if (PEOPLE.every((p) => this.state().best[p.id] === 'open')) {
+      setTimeout(() => {
+        this.toast('Everyone on your street has heard the gospel. Well done, good and faithful servant!');
+      }, 600);
     }
   }
 

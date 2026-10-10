@@ -10,14 +10,23 @@ import { GameService } from '../game/game.service';
         <h3>PEOPLE ON YOUR STREET</h3>
         <ul>
           @for (P of svc.people; track P.id) {
-            <li><b>{{ P.name }}</b><span class="tag" [class]="'tag ' + svc.npcStatus(P).cls">{{ svc.npcStatus(P).txt }}</span></li>
+            <li>
+              <b>{{ P.name }}</b
+              ><span class="tag" [class]="'tag ' + svc.npcStatus(P).cls">{{ svc.npcStatus(P).txt }}</span>
+            </li>
           }
         </ul>
         <h3>YOUR WITNESS</h3>
         <ul>
-          <li>People reached<b>{{ svc.met() }} / {{ svc.people.length }}</b></li>
-          <li>Want to follow Jesus<b>{{ svc.won() }}</b></li>
-          <li>Wise answers<b>{{ svc.state().good }} of {{ svc.state().total }}</b></li>
+          <li>
+            People reached<b>{{ svc.met() }} / {{ svc.people.length }}</b>
+          </li>
+          <li>
+            Want to follow Jesus<b>{{ svc.won() }}</b>
+          </li>
+          <li>
+            Wise answers<b>{{ svc.state().good }} of {{ svc.state().total }}</b>
+          </li>
         </ul>
       </div>
     }

@@ -9,7 +9,7 @@ export interface GameState {
   z: number;
   good: number;
   total: number;
-  best: Record<string, OutcomeId>;
+  best: Partial<Record<string, OutcomeId>>;
 }
 
 export const FRESH: GameState = { body: 80, word: 10, day: 1, hour: 7, x: 0, z: 0, good: 0, total: 0, best: {} };

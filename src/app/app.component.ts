@@ -1,5 +1,5 @@
-import { Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
-import { Engine, createEngine } from './game/engine';
+import { Component, type ElementRef, NgZone, type OnDestroy, type OnInit, ViewChild, inject } from '@angular/core';
+import { type Engine, createEngine } from './game/engine';
 import { GameService } from './game/game.service';
 import { GoalsComponent } from './ui/goals.component';
 import { HudComponent } from './ui/hud.component';
@@ -19,7 +19,9 @@ import { SheetComponent } from './ui/sheet.component';
       <div class="toast" [style.opacity]="svc.toastFading() ? 0 : 1">{{ msg }}</div>
     }
     @if (svc.joy(); as j) {
-      <div class="joy" [style.left.px]="j.x" [style.top.px]="j.y"><i [style.transform]="'translate(' + j.dx * 45 + 'px,' + j.dy * 45 + 'px)'"></i></div>
+      <div class="joy" [style.left.px]="j.x" [style.top.px]="j.y">
+        <i [style.transform]="'translate(' + j.dx * 45 + 'px,' + j.dy * 45 + 'px)'"></i>
+      </div>
     }
     <app-intro />
   `,
@@ -32,9 +34,12 @@ export class AppComponent implements OnInit, OnDestroy {
   private destroyed = false;
 
   ngOnInit(): void {
-    this.zone.runOutsideAngular(async () => {
+    void this.zone.runOutsideAngular(async () => {
       const engine = await createEngine(this.canvas.nativeElement, this.svc, this.zone);
-      if (this.destroyed) { engine.dispose(); return; }
+      if (this.destroyed) {
+        engine.dispose();
+        return;
+      }
       this.engine = engine;
       engine.start();
     });
