@@ -23,3 +23,8 @@ that runs outside the Angular zone and talks to the service through signals.
 
 Positive: rules are unit tested in milliseconds; UI components stay thin.
 Negative: the engine is large and only covered by end-to-end tests; splitting it is on the backlog.
+
+## Update (2026-10-10)
+
+Upgraded to Angular 21 (LTS) because Angular 19 and 20 carried high-severity security advisories. Angular 22 needs
+Node 24.15 or later; move to it when the development machines have that Node.

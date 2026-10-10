@@ -5,7 +5,7 @@ description: Choose between approaches or libraries for Go and Tell and record t
 
 # Compare options
 
-1. State the decision and the constraints (machine power, Angular 19, three r128, no paid services).
+1. State the decision and the constraints (machine power, Angular 21, three r128, no paid services).
 2. List 2-4 real options, including "do nothing".
 3. Score against: fit for constraints, complexity, performance on the owner's laptop, maintenance,
    reversibility, cost.

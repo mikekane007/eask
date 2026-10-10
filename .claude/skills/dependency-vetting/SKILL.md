@@ -11,7 +11,7 @@ Prefer no new dependency. Ask in order:
 2. **License** - MIT, ISC, BSD or Apache-2.0 only. Anything else: ask the owner.
 3. **Health** - maintained in the last year, more than a handful of users, no open critical advisories.
 4. **Size** - check bundle impact (`ng build`); runtime dependencies must be justified, dev tools are cheaper.
-5. **Compatibility** - supports Angular 19 and Node 24; peer dependencies satisfied without `--force`.
+5. **Compatibility** - supports Angular 21 and Node 24.11; peer dependencies satisfied without `--force` (documented `overrides` in package.json are the only exception).
 6. **Disk** - the owner's SSD is nearly full; avoid heavy downloads (browsers, Docker images).
 
 ## Dependabot PRs

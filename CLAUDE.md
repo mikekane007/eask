@@ -1,12 +1,12 @@
 # Go and Tell
 
-Angular 19 port of a three.js street-evangelism game: pick a city (Accra, Lille, Paris, Douai), walk its 3D
+Angular 21 port of a three.js street-evangelism game: pick a city (Accra, Lille, Paris, Douai), walk its 3D
 street, talk to its people and get feedback on each answer. English and French. Original was a single-file
 Claude artifact.
 
 ## Stack and layout
 
-- Angular 19, standalone components, signals. three.js **r128** (pinned). No test runner yet.
+- Angular 21 (LTS), standalone components, signals. three.js **r128** (pinned). Vitest unit tests, Playwright browser tests. Multiplayer rooms over Firebase (ADR 0007).
 - `src/app/game/` - `types.ts`, `layout.ts`, `state.ts`, `game.service.ts` (all rules and persistence),
   `engine.ts` plus its modules (3D world and render loop).
 - `src/app/game/cities/` - one file per city (`accra.ts`, `lille.ts`, `paris.ts`, `douai.ts`) with its theme and

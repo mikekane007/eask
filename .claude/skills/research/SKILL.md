@@ -1,6 +1,6 @@
 ---
 name: research
-description: Establish facts before coding in Go and Tell - library behaviour for the installed versions (Angular 19, three r128, Vitest, Playwright), browser and WebGL behaviour, and anything uncertain. Use before writing code that depends on an API detail you are not sure of.
+description: Establish facts before coding in Go and Tell - library behaviour for the installed versions (Angular 21, three r128, Vitest, Playwright), browser and WebGL behaviour, and anything uncertain. Use before writing code that depends on an API detail you are not sure of.
 ---
 
 # Research

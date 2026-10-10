@@ -10,7 +10,7 @@ description: Implement a feature, fix or refactor in the Go and Tell Angular app
 - Read `CLAUDE.md` and the nearest existing code that does something similar. Mirror its structure,
   naming and style. Consistency beats cleverness.
 - Unsure how an Angular or three.js API behaves? Check the docs (context7) for the **installed**
-  version before coding: Angular 19, three **r128** (pinned on purpose - newer three changes colour
+  version before coding: Angular 21, three **r128** (pinned on purpose - newer three changes colour
   and light units and the game would look different).
 
 ## 1. Plan (write it down if it touches more than 2 files)
