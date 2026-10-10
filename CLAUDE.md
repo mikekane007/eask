@@ -40,6 +40,7 @@ at a time, never the e2e suite with many workers locally, never `taskkill /IM no
 - [x] Split `engine.ts` into modules (kit, lighting, builders, city, characters, input, loop)
 - [x] Unit tests for `GameService` (Vitest)
 - [~] Playwright smoke tests written (intro, sleep, reload, people panel); still to add: walk to Grace Chapel, study, talk to Kwame. Not yet run locally; run in CI
+- [x] In-game rules screen (? button and intro) and live minimap (M button)
 - [ ] Keyboard/screen-reader pass on the sheet (focus the first option when it opens)
 - [ ] Sound: footsteps, ambient street (needs owner approval for any assets)
 - [ ] Deploy (ask the owner first: host, domain, cost)

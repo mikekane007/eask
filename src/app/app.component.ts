@@ -5,12 +5,13 @@ import { GoalsComponent } from './ui/goals.component';
 import { HudComponent } from './ui/hud.component';
 import { IntroComponent } from './ui/intro.component';
 import { MinimapComponent } from './ui/minimap.component';
+import { RulesComponent } from './ui/rules.component';
 import { SheetComponent } from './ui/sheet.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [HudComponent, GoalsComponent, SheetComponent, IntroComponent, MinimapComponent],
+  imports: [HudComponent, GoalsComponent, SheetComponent, IntroComponent, MinimapComponent, RulesComponent],
   template: `
     <canvas #c id="c"></canvas>
     <app-hud />
@@ -26,6 +27,7 @@ import { SheetComponent } from './ui/sheet.component';
       </div>
     }
     <app-intro />
+    <app-rules />
   `,
 })
 export class AppComponent implements OnInit, OnDestroy {

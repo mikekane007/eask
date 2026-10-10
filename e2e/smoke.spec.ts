@@ -63,3 +63,17 @@ test('the people panel lists all ten people', async ({ page }) => {
   await expect(page.getByText('Kwame')).toBeVisible();
   await expect(page.getByText('Auntie Akos')).toBeVisible();
 });
+
+test('the rules can be opened from the intro and during play, and closed with Escape', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'How to play' }).click();
+  await expect(page.getByRole('dialog', { name: 'HOW TO PLAY' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toBeHidden();
+
+  await page.getByRole('button', { name: 'Step out' }).click();
+  await page.getByRole('button', { name: 'Game rules' }).click();
+  await expect(page.getByText('People and the Word they need')).toBeVisible();
+  await page.getByRole('button', { name: 'Got it' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+});

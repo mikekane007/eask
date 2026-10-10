@@ -124,7 +124,7 @@ export async function createEngine(canvas: HTMLCanvasElement, svc: GameService, 
     }
     const talking = svc.talking();
 
-    if (svc.playing() && !talking) {
+    if (svc.playing() && !talking && !svc.rulesOpen()) {
       let mx = 0,
         mz = 0;
       if (keys['w'] || keys['arrowup']) mz -= 1;

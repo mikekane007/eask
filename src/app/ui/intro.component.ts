@@ -20,6 +20,7 @@ import { GameService } from '../game/game.service';
             grow your Word and reach harder conversations.
           </p>
           <button class="mbtn" (click)="svc.start()">{{ svc.hasSave() ? 'Continue' : 'Step out' }}</button>
+          <button class="mbtn ghost" (click)="svc.rulesOpen.set(true)">How to play</button>
           @if (svc.hasSave()) {
             <button class="mbtn ghost" (click)="svc.reset()">Start over</button>
           }

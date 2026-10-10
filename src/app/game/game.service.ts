@@ -42,6 +42,7 @@ export class GameService {
   readonly toastFading = signal(false);
   readonly zoom = signal(1);
   readonly mapOpen = signal(true);
+  readonly rulesOpen = signal(false);
   /** Live positions for the minimap. Plain object on purpose: it changes every frame and must not trigger change detection. */
   readonly live = {
     x: 0,
