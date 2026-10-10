@@ -1,0 +1,10 @@
+title = "Go and Tell secret scan"
+
+[extend]
+useDefault = true
+
+# The Firebase web settings (including the "apiKey") identify the project and are public by design: every visitor's
+# browser receives them. Access is controlled by database.rules.json, not by keeping this key secret (ADR 0007).
+[allowlist]
+description = "Public Firebase web config"
+paths = ['''src/app/game/net/firebase-room\.ts''']
