@@ -95,6 +95,20 @@ export function createKit(scene: THREE.Scene) {
     },
     [24, 24],
   );
+  // dusty open ground with worn concrete patches, as in Osu
+  TX['dust'] = canvasTex(
+    256,
+    256,
+    (g, w, h) => {
+      g.fillStyle = '#b8a48c';
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = 'rgba(214,206,192,.16)';
+      for (let i = 0; i < 5; i++)
+        g.fillRect(Math.random() * w, Math.random() * h, 40 + Math.random() * 70, 30 + Math.random() * 60);
+      speckle(g, w, h, 3200, ['#a3876a', '#c9b79f', '#8f7458', '#b06d48'], 0.55);
+    },
+    [24, 24],
+  );
   TX['paving'] = canvasTex(
     128,
     128,

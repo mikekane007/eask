@@ -74,6 +74,14 @@ export interface Place {
 export interface CityTheme {
   wallColors: number[];
   roof: { kind: 'corrugated' | 'tile'; colors: number[]; pitch: number };
+  /** How buildings on the real street map look. */
+  blocks: {
+    facade: 'brick' | 'stone' | 'plaster';
+    roof: 'hip' | 'mansard' | 'flat';
+    surface: 'tiles' | 'zinc' | 'concrete';
+    /** Share of buildings with shops on the ground floor, 0..1. */
+    shopShare: number;
+  };
   ground: 'laterite' | 'grass';
   /** Polytanks and satellite dishes on flat roofs. */
   rooftopClutter: boolean;

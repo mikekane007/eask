@@ -15,6 +15,7 @@ export const PARIS: City = {
   theme: {
     wallColors: [0xe8dfc8, 0xd9cdb0, 0xf0e8d6, 0xe3d6b8, 0xd4c8aa, 0xeee4cc, 0xcfc4a6, 0xf3ecdc],
     roof: { kind: 'tile', colors: [0x6c7378, 0x5c6368, 0x7a8187], pitch: 1.9 },
+    blocks: { facade: 'stone', roof: 'mansard', surface: 'zinc', shopShare: 0.65 },
     ground: 'grass',
     rooftopClutter: false,
     palms: false,

@@ -15,6 +15,7 @@ export const DOUAI: City = {
   theme: {
     wallColors: [0xe3d3b3, 0xd6c19a, 0xb8613f, 0xc9a98a, 0xe9dec6, 0xa85a3c, 0xdcc8a4, 0xf1e8d4],
     roof: { kind: 'tile', colors: [0xb5532f, 0xa24a2a, 0xc2623b], pitch: 2.2 },
+    blocks: { facade: 'brick', roof: 'hip', surface: 'tiles', shopShare: 0.45 },
     ground: 'grass',
     rooftopClutter: false,
     palms: false,

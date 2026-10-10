@@ -46,7 +46,8 @@ test('choosing a city shows its intro, and starting reveals the HUD and the home
 
   await expect(page.getByRole('heading', { name: 'GO AND TELL' })).toBeHidden();
   await expect(page.getByText('Energy', { exact: true })).toBeVisible();
-  await expect(page.getByText('07:00')).toBeVisible();
+  // the clock starts at 07:00 and ticks a minute every few seconds while the city loads
+  await expect(page.getByText(/^07:0\d$/)).toBeVisible();
   // The player spawns beside home, so the room sheet opens.
   await expect(page.getByRole('heading', { name: 'Your room' })).toBeVisible();
 });

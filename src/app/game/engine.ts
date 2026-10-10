@@ -455,6 +455,9 @@ export async function createEngine(
     const greyAmt = Math.min(1, wx.dark * 1.7);
     skyU.top.value.copy(dull(CUR.top, skyT, greyAmt, wx.dark * 0.25));
     skyU.bot.value.copy(dull(CUR.bot, skyB, greyAmt, wx.dark * 0.25));
+    skyU.sunDir.value.copy(CUR.sunP);
+    // the sun's glow fades behind cloud and rain
+    skyU.sunCol.value.copy(CUR.sunC).multiplyScalar(Math.max(0, 1 - greyAmt) * Math.min(1, CUR.sunI));
     fog.color.copy(skyB).convertSRGBToLinear();
     fog.near = 70 - 62 * Math.min(1, wx.fog);
     fog.far = 200 - 140 * Math.min(1, wx.fog);

@@ -15,6 +15,7 @@ export const LILLE: City = {
   theme: {
     wallColors: [0xb5533c, 0xc4694a, 0xa84a35, 0xd9b99b, 0xe8dcc3, 0xb86b4b, 0xcfa88a, 0xf0e6d2],
     roof: { kind: 'tile', colors: [0x5b6670, 0x4a545e, 0x6b7680], pitch: 2.1 },
+    blocks: { facade: 'brick', roof: 'hip', surface: 'tiles', shopShare: 0.5 },
     ground: 'grass',
     rooftopClutter: false,
     palms: false,

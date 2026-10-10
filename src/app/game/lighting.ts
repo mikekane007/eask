@@ -3,7 +3,12 @@ import * as THREE from 'three';
 /** Sky dome plus the day/night colour tables. The render loop eases `CUR` toward `LT`. */
 export function createLighting(scene: THREE.Scene) {
   // sky dome: vertical gradient, colours driven by the clock
-  const skyU = { top: { value: new THREE.Color('#3f8bd8') }, bot: { value: new THREE.Color('#d9ecf2') } };
+  const skyU = {
+    top: { value: new THREE.Color('#3f8bd8') },
+    bot: { value: new THREE.Color('#d9ecf2') },
+    sunDir: { value: new THREE.Vector3(0.4, 0.8, 0.3).normalize() },
+    sunCol: { value: new THREE.Color('#fff1d6') },
+  };
   const sky = new THREE.Mesh(
     new THREE.SphereGeometry(600, 32, 16),
     new THREE.ShaderMaterial({
@@ -13,8 +18,16 @@ export function createLighting(scene: THREE.Scene) {
       fog: false,
       vertexShader:
         'varying vec3 vP;void main(){vP=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-      fragmentShader:
-        'uniform vec3 top;uniform vec3 bot;varying vec3 vP;void main(){float h=clamp(vP.y*1.8+0.12,0.0,1.0);gl_FragColor=vec4(mix(bot,top,pow(h,0.7)),1.0);}',
+      // gradient from horizon to zenith, a warm haze near the horizon on the sun's side, and a soft glow round the sun
+      fragmentShader: `uniform vec3 top;uniform vec3 bot;uniform vec3 sunDir;uniform vec3 sunCol;varying vec3 vP;
+void main(){
+  float h=clamp(vP.y*1.8+0.12,0.0,1.0);
+  vec3 c=mix(bot,top,pow(h,0.7));
+  float s=max(dot(normalize(vP),normalize(sunDir)),0.0);
+  float low=1.0-clamp(vP.y*3.0,0.0,1.0);
+  c+=sunCol*(pow(s,6.0)*0.18*low+pow(s,180.0)*0.55);
+  gl_FragColor=vec4(c,1.0);
+}`,
     }),
   );
   sky.renderOrder = -1;

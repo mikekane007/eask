@@ -1,7 +1,11 @@
 import * as THREE from 'three';
 import type { Kit } from '../kit';
 import type { City, CityTheme, Place } from '../types';
+import { createFacades } from '../facades';
+import { type BlockInput, type Geo, type Rgb, buildBlocks } from './buildings';
 import { MapCollision } from './collision';
+import { buildGraph } from './road-graph';
+import { streetDetails } from './street-details';
 import { pointAlong, lineLength, toPoints, pointInPolygon, type Pt } from './geo';
 import { ribbon } from './ribbon';
 import type { MapData } from './types';
@@ -60,6 +64,27 @@ function addCutaway(mat: THREE.Material, cut: Cutaway): void {
   }`,
       );
   };
+}
+
+/** Several boxes [w, h, d, x, y, z] joined into one geometry, so they draw as one object. */
+function mergeBoxes(boxes: [number, number, number, number, number, number][]): THREE.BufferGeometry {
+  const pos: number[] = [];
+  const nor: number[] = [];
+  const idx: number[] = [];
+  for (const [w, h, d, x, y, z] of boxes) {
+    const g = new THREE.BoxGeometry(w, h, d).translate(x, y, z);
+    const base = pos.length / 3;
+    pos.push(...(g.attributes['position'].array as Float32Array));
+    nor.push(...(g.attributes['normal'].array as Float32Array));
+    const index = g.index;
+    if (index) for (let k = 0; k < index.count; k++) idx.push(base + index.getX(k));
+    g.dispose();
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  out.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  out.setIndex(idx);
+  return out;
 }
 
 const hash = (n: number): number => {
@@ -130,12 +155,15 @@ export function createRealWorld(
 
   // ---- ground
   const margin = 80;
-  const paving = TX['paving'].clone();
+  // open ground: paved squares in Europe, packed red earth and dust in Accra
+  const dusty = theme.ground === 'laterite';
+  const paving = TX[dusty ? 'dust' : 'paving'].clone();
   paving.needsUpdate = true;
-  paving.repeat.set((map.w + margin * 2) / 5, (map.h + margin * 2) / 5);
+  const tile = dusty ? 16 : 5;
+  paving.repeat.set((map.w + margin * 2) / tile, (map.h + margin * 2) / tile);
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(map.w + margin * 2, map.h + margin * 2),
-    new THREE.MeshLambertMaterial({ map: paving, color: lin(theme.ground === 'laterite' ? 0xb99a74 : 0xb8af9a) }),
+    new THREE.MeshLambertMaterial({ map: paving, color: lin(dusty ? 0xf0e8de : 0xb8af9a) }),
   );
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
@@ -151,13 +179,13 @@ export function createRealWorld(
   TX[theme.ground].repeat.set(180, 180);
 
   // ---- streets
-  const roadGeo = (drive: boolean, y: number) => {
+  const roadGeo = (drive: boolean, y: number, extra = 0) => {
     const pos: number[] = [];
     const uv: number[] = [];
     const idx: number[] = [];
     for (const r of map.roads) {
       if ((r.d === 1) !== drive) continue;
-      const rb = ribbon(toPoints(r.p), r.w);
+      const rb = ribbon(toPoints(r.p), r.w + extra);
       const base = pos.length / 3;
       for (let i = 0; i < rb.xz.length; i += 2) {
         pos.push(rb.xz[i], y, rb.xz[i + 1]);
@@ -186,10 +214,57 @@ export function createRealWorld(
     roadGeo(false, 0.025),
     new THREE.MeshLambertMaterial({ map: walkTex, color: lin(0xe3d3b0), side: THREE.DoubleSide }),
   );
-  for (const m of [drive, walk]) {
+  // kerbs: a pale stone edge showing just outside the asphalt
+  const kerb = new THREE.Mesh(roadGeo(true, 0.03, 0.7), M(0xc9c4b8));
+  for (const m of [drive, walk, kerb]) {
     m.receiveShadow = true;
     scene.add(m);
   }
+
+  // painted centre lines and zebra crossings, benches and bins (one instanced mesh each)
+  const details = streetDetails(buildGraph(map.roads), (x, z) => !collision.blocked(x, z, 0.9));
+  const marks = [...details.dashes, ...details.crossings];
+  if (marks.length) {
+    const paint = new THREE.InstancedMesh(
+      new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+      new THREE.MeshLambertMaterial({ color: lin(0xeeeeea), polygonOffset: true, polygonOffsetFactor: -2 }),
+      marks.length,
+    );
+    const o = new THREE.Object3D();
+    marks.forEach((m, i) => {
+      o.position.set(m.x, 0.045, m.z);
+      o.rotation.set(0, m.angle, 0);
+      o.scale.set(m.width, 1, m.length);
+      o.updateMatrix();
+      paint.setMatrixAt(i, o.matrix);
+    });
+    paint.receiveShadow = true;
+    scene.add(paint);
+  }
+  const benches = details.furniture.filter((f) => f.kind === 'bench');
+  const bins = details.furniture.filter((f) => f.kind === 'bin');
+  const furnish = (geo: THREE.BufferGeometry, mat: THREE.Material, spots: typeof benches) => {
+    if (!spots.length) return;
+    const im = new THREE.InstancedMesh(geo, mat, spots.length);
+    const o = new THREE.Object3D();
+    spots.forEach((f, i) => {
+      o.position.set(f.x, 0, f.z);
+      o.rotation.set(0, f.angle, 0);
+      o.updateMatrix();
+      im.setMatrixAt(i, o.matrix);
+    });
+    im.castShadow = true;
+    scene.add(im);
+  };
+  // a bench: seat, back and two legs merged into one shape
+  const bench = mergeBoxes([
+    [1.8, 0.08, 0.5, 0, 0.48, 0],
+    [1.8, 0.45, 0.08, 0, 0.78, -0.24],
+    [0.08, 0.48, 0.45, -0.8, 0.24, 0],
+    [0.08, 0.48, 0.45, 0.8, 0.24, 0],
+  ]);
+  furnish(bench, M(0x6b4a2e), benches);
+  furnish(new THREE.CylinderGeometry(0.28, 0.24, 0.9, 10).translate(0, 0.45, 0), M(0x2f4a3a), bins);
 
   // ---- parks and water
   const lawn = TX['lawn'].clone();
@@ -210,112 +285,102 @@ export function createRealWorld(
   );
   if (lake) scene.add(lake);
 
-  // ---- buildings: every footprint in one walls mesh and one roofs mesh
+  // ---- buildings: walls, shop fronts, roofs and awnings, each merged into one mesh
   const places = new Map<string, Place>(city.places.map((p) => [p.id, p]));
   const landmarkOf = new Map<number, string>();
   for (const [id, lm] of Object.entries(map.anchors.landmarks)) landmarkOf.set(lm.b, id);
-
-  const wp: number[] = [];
-  const wn: number[] = [];
-  const wu: number[] = [];
-  const wc: number[] = [];
-  const wi: number[] = [];
-  const rp: number[] = [];
-  const rn: number[] = [];
-  const rc: number[] = [];
-  const ri: number[] = [];
-  const col = new THREE.Color();
-  map.buildings.forEach((b, bi) => {
-    const pts = toPoints(b.p);
-    const n = pts.length;
+  const look = theme.blocks;
+  const tex = createFacades(kit, look.facade, look.surface);
+  const rgb = (hex: number | string, k = 1): Rgb => {
+    const c = new THREE.Color(hex).convertSRGBToLinear();
+    return [c.r * k, c.g * k, c.b * k];
+  };
+  const shopColors = [...theme.stalls.map(([a]) => a), '#1f3b2d', '#22334d', '#5a2a2a', '#2f2f2f'];
+  const inputs: BlockInput[] = map.buildings.map((b, bi) => {
     const landmark = landmarkOf.get(bi);
-    const h = landmark === 'church' ? Math.max(b.h, 13) : b.h;
     const wallHex =
       (landmark ? LANDMARK_COLORS[landmark] : undefined) ??
       theme.wallColors[Math.floor(hash(bi) * theme.wallColors.length)];
-    col.setHex(wallHex).convertSRGBToLinear();
-    const shade = 0.86 + hash(bi + 7) * 0.2;
-    const wr = col.r * shade;
-    const wg = col.g * shade;
-    const wb = col.b * shade;
-    // Which way the footprint runs decides which side of each wall is the outside (exact even for L-shapes).
-    let area2 = 0;
-    for (let i = 0; i < n; i++) area2 += pts[i][0] * pts[(i + 1) % n][1] - pts[(i + 1) % n][0] * pts[i][1];
-    const ccw = area2 > 0;
-
-    let run = 0;
-    for (let i = 0; i < n; i++) {
-      const a = pts[i];
-      const c = pts[(i + 1) % n];
-      const dx = c[0] - a[0];
-      const dz = c[1] - a[1];
-      const len = Math.hypot(dx, dz);
-      if (len < 0.05) continue;
-      const nx = ((ccw ? 1 : -1) * dz) / len;
-      const nz = ((ccw ? -1 : 1) * dx) / len;
-      const base = wp.length / 3;
-      wp.push(a[0], 0, a[1], c[0], 0, c[1], c[0], h, c[1], a[0], h, a[1]);
-      for (let k = 0; k < 4; k++) wn.push(nx, 0, nz);
-      const u0 = run / 6;
-      const u1 = (run + len) / 6;
-      wu.push(u0, 0, u1, 0, u1, h / 6.2, u0, h / 6.2);
-      for (let k = 0; k < 4; k++) wc.push(wr, wg, wb);
-      // faces point outwards, so only the outside of a wall is drawn and a see-through hole shows the street beyond
-      if (ccw) wi.push(base, base + 2, base + 1, base, base + 3, base + 2);
-      else wi.push(base, base + 1, base + 2, base, base + 2, base + 3);
-      run += len;
-    }
-
-    const tri = triangulate(pts);
-    if (tri.length) {
-      const base = rp.length / 3;
-      const roofHex = theme.roof.colors[Math.floor(hash(bi + 3) * theme.roof.colors.length)];
-      col.setHex(roofHex).convertSRGBToLinear();
-      for (const [x, z] of pts) {
-        rp.push(x, h + 0.02, z);
-        rn.push(0, 1, 0);
-        rc.push(col.r, col.g, col.b);
-      }
-      // each roof triangle faces up
-      for (let t = 0; t < tri.length; t += 3) {
-        const [i0, i1, i2] = [tri[t], tri[t + 1], tri[t + 2]];
-        const up =
-          (pts[i1][0] - pts[i0][0]) * (pts[i2][1] - pts[i0][1]) - (pts[i2][0] - pts[i0][0]) * (pts[i1][1] - pts[i0][1]);
-        if (up < 0) ri.push(base + i0, base + i1, base + i2);
-        else ri.push(base + i0, base + i2, base + i1);
-      }
-    }
+    const seed = hash(bi + 11);
+    const plain = landmark === 'church' || landmark === 'home' || b.h > 30 || b.a < 30;
+    const shops = landmark === 'chop' || (!plain && hash(bi + 5) < look.shopShare);
+    return {
+      pts: toPoints(b.p),
+      h: landmark === 'church' ? Math.max(b.h, 13) : b.h,
+      wall: rgb(wallHex, 0.86 + hash(bi + 7) * 0.2),
+      roof: rgb(theme.roof.colors[Math.floor(hash(bi + 3) * theme.roof.colors.length)]),
+      shop: shops ? rgb(shopColors[Math.floor(hash(bi + 9) * shopColors.length)]) : null,
+      seed,
+    };
   });
+  const blocks = buildBlocks(
+    inputs,
+    {
+      roof: look.roof,
+      pitch: theme.roof.pitch * 0.3,
+      groundFloor: 3.6,
+      parapet: look.roof === 'flat' ? 0.8 : 0,
+      chimneys: look.roof !== 'flat',
+      tanks: theme.rooftopClutter,
+    },
+    triangulate,
+  );
 
-  const cutaway = (
-    geoms: { p: number[]; n: number[]; c: number[]; i: number[]; u?: number[] },
-    mat: THREE.Material,
-  ) => {
+  const cutaway = (g0: Geo, mat: THREE.Material, shadow = true) => {
     const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(geoms.p, 3));
-    g.setAttribute('normal', new THREE.Float32BufferAttribute(geoms.n, 3));
-    g.setAttribute('color', new THREE.Float32BufferAttribute(geoms.c, 3));
-    if (geoms.u) g.setAttribute('uv', new THREE.Float32BufferAttribute(geoms.u, 2));
-    g.setIndex(geoms.i);
+    g.setAttribute('position', new THREE.Float32BufferAttribute(g0.p, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(g0.n, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(g0.c, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(g0.u, 2));
+    g.setIndex(g0.i);
     addCutaway(mat, cut);
     const m = new THREE.Mesh(g, mat);
-    m.castShadow = true;
+    m.castShadow = shadow;
     m.receiveShadow = true;
     scene.add(m);
     return m;
   };
-  const wallMat = new THREE.MeshLambertMaterial({
-    vertexColors: true,
-    map: TX['facade'],
-    emissive: lin(0xffc27a),
-    emissiveMap: TX['lit'],
-    emissiveIntensity: 0,
-    // outer faces only: walls face outwards, so a see-through hole shows the street, not the rooms
-  });
-  wallMat.userData.glass = false;
-  facadeMats.push(wallMat);
-  cutaway({ p: wp, n: wn, c: wc, i: wi, u: wu }, wallMat);
-  cutaway({ p: rp, n: rn, c: rc, i: ri }, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  // outer faces only: walls face outwards, so a see-through hole shows the street, not the rooms
+  const lit = (map: THREE.Texture, emissiveMap: THREE.Texture) => {
+    const m = new THREE.MeshLambertMaterial({
+      vertexColors: true,
+      map,
+      emissive: lin(0xffc27a),
+      emissiveMap,
+      emissiveIntensity: 0,
+    });
+    m.userData.glass = false;
+    facadeMats.push(m);
+    return m;
+  };
+  cutaway(blocks.walls, lit(tex.wall, tex.wallLit));
+  if (blocks.shops.i.length) cutaway(blocks.shops, lit(tex.shop, tex.shopLit));
+  cutaway(blocks.roofs, new THREE.MeshLambertMaterial({ vertexColors: true, map: tex.roof }));
+  if (blocks.awnings.i.length) {
+    cutaway(blocks.awnings, new THREE.MeshLambertMaterial({ vertexColors: true, map: tex.awning }), false);
+  }
+
+  // chimneys on pitched roofs, water tanks on flat ones (one draw each)
+  const placeAll = (
+    geo: THREE.BufferGeometry,
+    mat: THREE.Material,
+    spots: [number, number, number][],
+    lift: number,
+  ) => {
+    if (!spots.length) return;
+    const im = new THREE.InstancedMesh(geo, mat, spots.length);
+    const o = new THREE.Object3D();
+    spots.forEach(([x, y, z], i) => {
+      o.position.set(x, y + lift, z);
+      o.rotation.y = hash(i) * Math.PI;
+      o.updateMatrix();
+      im.setMatrixAt(i, o.matrix);
+    });
+    im.castShadow = true;
+    scene.add(im);
+  };
+  placeAll(new THREE.BoxGeometry(0.7, 1.8, 0.9), M(0x8a4b37), blocks.chimneys, 0.9);
+  placeAll(new THREE.CylinderGeometry(0.75, 0.75, 1.6, 10), M(0x1f2326), blocks.tanks, 0.8);
 
   // ---- trees: in parks and along some streets, drawn with instancing
   const treeSpots: { x: number; z: number; s: number }[] = [];
