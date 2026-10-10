@@ -9,6 +9,8 @@ import { createKit } from './kit';
 import { H } from './layout';
 import { createLighting } from './lighting';
 import { createPedestrians } from './pedestrians';
+import { buildGraph, networks } from './map/road-graph';
+import { createRoadTraffic } from './map/road-traffic';
 import { createRealWorld } from './map/real-world';
 import { createTraffic } from './traffic';
 import type { SoundService } from './sound.service';
@@ -84,7 +86,17 @@ export async function createEngine(
   const { facadeMats, lampGlows } = builders;
   // Traffic and the crowd follow the grid's straight streets; for real maps they come with the road network.
   const traffic = grid ? createTraffic(scene, kit, city.theme) : null;
-  const crowd = grid ? createPedestrians(scene, kit, city.theme) : null;
+  const roadTraffic = mapData ? createRoadTraffic(scene, kit, city.theme, mapData.roads) : null;
+  const walkGraph = mapData ? buildGraph(mapData.roads, (r) => r.k !== 'steps' && r.w >= 2) : null;
+  const crowd = grid
+    ? createPedestrians(scene, kit, city.theme)
+    : walkGraph && real
+      ? createPedestrians(scene, kit, city.theme, {
+          graph: walkGraph,
+          edges: networks(walkGraph)[0] ?? [],
+          blocked: real.blocked,
+        })
+      : null;
   const { player, npcs, S0 } = createCharacters(scene, kit, svc, city);
   const input = createInput(canvas, svc, zone);
   const { keys } = input;
@@ -348,18 +360,26 @@ export async function createEngine(
       svc.playing() ? p : null,
       Math.max(0.5, 1 - 0.2 * wx.rain - 0.25 * wx.fog),
     );
+    roadTraffic?.update(
+      dt,
+      st.hour + st.minute / 60,
+      svc.playing() ? p : null,
+      Math.max(0.5, 1 - 0.2 * wx.rain - 0.25 * wx.fog),
+    );
     crowd?.update(dt, st.hour + st.minute / 60, wx.rain);
 
     // Sound: the ambient mix a few times a second, and the church bell on the hour.
     audioClock += realDt;
     if (audioClock > 0.25) {
+      svc.live.stats.vehicles = (traffic?.visibleCount ?? 0) + (roadTraffic?.visibleCount ?? 0);
+      svc.live.stats.walkers = crowd?.visibleCount ?? 0;
       if (svc.playing()) {
         sound.update(
           {
             hour: st.hour + st.minute / 60,
             rain: wx.rain,
             fog: wx.fog,
-            trafficNear: traffic?.nearCount(p, 55) ?? 0,
+            trafficNear: (traffic?.nearCount(p, 55) ?? 0) + (roadTraffic?.nearCount(p, 55) ?? 0),
             crowdNear: crowd?.nearCount(p, 40) ?? 0,
           },
           audioClock,

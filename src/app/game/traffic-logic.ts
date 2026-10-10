@@ -82,3 +82,37 @@ export function desiredSpeed({ vmax, stopDistance, obstacleGap, decel }: SpeedLi
 export function approach(current: number, target: number, dt: number, accel: number, decel: number): number {
   return target > current ? Math.min(target, current + accel * dt) : Math.max(target, current - decel * dt);
 }
+
+/** A vehicle or person on the road, as far as another vehicle is concerned. */
+export interface Body {
+  x: number;
+  z: number;
+  /** Length along the road, in metres. */
+  len: number;
+}
+
+/**
+ * The free distance in front of a vehicle before it would reach something in its path, or null if the way is clear.
+ * Looks along the direction of travel `(dx, dz)` within `look` metres and a corridor `half` metres to each side, so
+ * it works on bends and across junctions as well as along a straight lane.
+ */
+export function gapAhead(
+  self: Body & { dx: number; dz: number },
+  others: readonly Body[],
+  look = 26,
+  half = 2.2,
+  margin = 1.2,
+): number | null {
+  let best: number | null = null;
+  for (const o of others) {
+    const rx = o.x - self.x;
+    const rz = o.z - self.z;
+    const along = rx * self.dx + rz * self.dz;
+    if (along <= 0 || along > look) continue;
+    const lateral = Math.abs(rx * self.dz - rz * self.dx);
+    if (lateral > half) continue;
+    const free = along - (self.len + o.len) / 2 - margin;
+    if (best === null || free < best) best = free;
+  }
+  return best;
+}

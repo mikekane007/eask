@@ -17,12 +17,12 @@ Legend: ✅ done · 🔄 in progress · ⏳ planned · ⏸ waiting on owner
 ## Phase 2: A real place
 
 - ✅ 2.1 Pilot: a real Lille neighbourhood from OpenStreetMap (streets and building footprints), loaded on demand
-- 🔄 2.2 Road network on real maps: traffic and the crowd on real streets; chunking only if needed
+- ✅ 2.2 Road network on real maps: traffic (junction turn-taking, yielding) and the crowd walk the real streets; chunking was not needed (about 115 KB, one draw call per material)
 - ✅ 2.3 Real maps for Paris (Latin Quarter), Douai (the belfry area) and Accra (Osu)
 
 ## Phase 3: A real person's life
 
-- ⏳ 3.1 Needs and money: eat, sleep, small income and costs
+- 🔄 3.1 Needs and money: eat, sleep, small income and costs
 - ⏳ 3.2 Phone: contacts from good conversations, follow-up meetings, Bible reading together
 - ⏳ 3.3 Relationships and reputation that change how people respond
 - ⏳ 3.4 Missions: hospital visit, a small group at a home, helping a neighbour

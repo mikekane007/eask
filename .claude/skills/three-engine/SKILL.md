@@ -78,3 +78,7 @@ button or by editing the saved state) when touching lights or emissive materials
   (`GameState.map`).
 - 2026-10-10: Merged building meshes cannot be faded per building, so `real-world.ts` injects a world-space cut-away into the wall
   and roof materials (`onBeforeCompile`). New materials for tall things on a real map should call `addCutaway` too.
+- 2026-10-10: Traffic and the crowd now exist for both worlds. Grid: `traffic.ts` + `pedestrians.ts` (pavement loops). Real maps:
+  `map/road-traffic.ts` + `pedestrians.ts` with `WalkRoutes`. Both use the pure rules in `traffic-logic.ts` (`gapAhead`, `desiredSpeed`)
+  and `crowd-logic.ts`. `svc.live.stats` shows how many vehicles and walkers are out, which is the quickest way to check them
+  headlessly (rush hour about 12 vehicles, night 3, walkers 0 at night and only a few in rain).

@@ -36,5 +36,13 @@ streets and buildings. The world must still run smoothly on a 2016 laptop with i
 
 Positive: real streets and buildings for little cost; the file is small; placement is tested; cities can be added
 with one command.
-Negative: traffic and the background crowd do not yet run on real maps (they need a road network, the next
-stage); buildings are extruded footprints with flat roofs; map data needs a credit and a refresh now and then.
+Negative: buildings are extruded footprints with flat roofs; map data needs a credit and a refresh now and then.
+
+## Update: road network
+
+Traffic and the crowd run on real maps too. `map/road-graph.ts` builds a graph of junctions and straight street pieces
+from the centre lines (joining street ends to the sides of other streets that lost their shared point when the map was
+simplified). Vehicles (`map/road-traffic.ts`) keep to the right, choose turns that favour going straight, take turns
+through junctions (one vehicle in a junction zone at a time, with a time limit so nothing locks up), keep their distance
+from whatever is ahead and stop for the player. Pedestrians walk the same streets, keeping to one side. Both follow the
+same routines, density and weather rules as on the grid. Real-map checks live in `map/real-maps.spec.ts`.

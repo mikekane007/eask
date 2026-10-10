@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { pickSchedule, ringLength, ringPoint, SCHEDULES, isOutAndAbout, staysOut } from './crowd-logic';
 import type { Kit } from './kit';
 import { B, N, bMin } from './layout';
+import { directionFrom, nextEdge, otherEnd, pointOnEdge, type GEdge, type RoadGraph } from './map/road-graph';
 import type { CityTheme } from './types';
 
 const CROWD = 36;
@@ -31,10 +32,24 @@ interface Walker {
   /** Where they were last drawn. */
   x: number;
   z: number;
+  /** On a real map: the street piece they are on, where they set off from, how far along, and which side. */
+  edge: GEdge | null;
+  from: number;
+  along: number;
+  side: 1 | -1;
+}
+
+/** Where people walk on a real map: along its streets, keeping to one side. */
+export interface WalkRoutes {
+  graph: RoadGraph;
+  /** The street pieces they may start on (one connected network). */
+  edges: readonly GEdge[];
+  /** True if a person of radius r standing at (x, z) would be inside a building. */
+  blocked: (x: number, z: number, r: number) => boolean;
 }
 
 /** A background crowd that follows daily routines, walks the pavements and goes indoors in the rain. */
-export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme) {
+export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme, routes?: WalkRoutes) {
   const { rnd } = kit;
   const w = B - 2 * INSET;
   const len = ringLength(w, w);
@@ -70,7 +85,17 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
       pause: 0,
       x: 0,
       z: 0,
+      edge: null,
+      from: 0,
+      along: 0,
+      side: rnd() > 0.5 ? 1 : -1,
     });
+    if (routes?.edges.length) {
+      const w0 = walkers[walkers.length - 1];
+      w0.edge = routes.edges[Math.floor(rnd() * routes.edges.length)];
+      w0.from = rnd() > 0.5 ? w0.edge.a : w0.edge.b;
+      w0.along = rnd() * w0.edge.len;
+    }
     torso.setColorAt(n, toLinear(SHIRTS[Math.floor(rnd() * SHIRTS.length)]));
     head.setColorAt(n, toLinear(theme.skins[Math.floor(rnd() * theme.skins.length)]));
     const pants = toLinear(PANTS[Math.floor(rnd() * PANTS.length)]);
@@ -79,6 +104,7 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
   }
   for (const m of [torso, head, legL, legR]) if (m.instanceColor) m.instanceColor.needsUpdate = true;
 
+  const baseY = routes ? 0.04 : PAVE_Y;
   const dummy = new THREE.Object3D();
   const hide = (n: number) => {
     dummy.position.set(0, -10, 0);
@@ -126,7 +152,17 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
 
         const walking = p.pause <= 0;
         if (walking) {
-          p.u += p.dir * p.speed * dt;
+          if (routes && p.edge) {
+            p.along += p.speed * dt;
+            if (p.along >= p.edge.len) {
+              const at = otherEnd(p.edge, p.from);
+              const next = nextEdge(routes.graph, p.edge, at, rnd);
+              p.along -= p.edge.len;
+              p.edge = next;
+              p.from = at;
+              p.along = Math.min(p.along, next.len);
+            }
+          } else p.u += p.dir * p.speed * dt;
           p.phase += p.speed * dt * 2.4;
           p.stopIn -= p.speed * dt;
           if (p.stopIn <= 0) {
@@ -137,10 +173,27 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
           p.pause -= dt;
         }
 
-        const pt = ringPoint(p.u, w, w);
-        const heading = p.dir > 0 ? pt.heading : pt.heading + Math.PI;
-        const x = bMin(p.i) + INSET + pt.x;
-        const z = bMin(p.j) + INSET + pt.z;
+        let x: number;
+        let z: number;
+        let heading: number;
+        if (routes && p.edge) {
+          const at = pointOnEdge(routes.graph, p.edge, p.from, p.along);
+          // keep to one side of the street, unless that would put them inside a building
+          const off = Math.max(0, Math.min(p.edge.width / 2 - 0.6, 2.2)) * p.side;
+          x = at.x - at.dz * off;
+          z = at.z + at.dx * off;
+          if (routes.blocked(x, z, 0.3)) {
+            x = at.x;
+            z = at.z;
+          }
+          const d = directionFrom(p.edge, p.from);
+          heading = Math.atan2(d.dx, d.dz);
+        } else {
+          const pt = ringPoint(p.u, w, w);
+          heading = p.dir > 0 ? pt.heading : pt.heading + Math.PI;
+          x = bMin(p.i) + INSET + pt.x;
+          z = bMin(p.j) + INSET + pt.z;
+        }
         p.x = x;
         p.z = z;
         const bob = walking ? Math.abs(Math.sin(p.phase)) * 0.04 : 0;
@@ -149,10 +202,10 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
 
         dummy.scale.setScalar(s);
         dummy.rotation.set(0, heading, 0, 'YXZ');
-        dummy.position.set(x, PAVE_Y + 1.25 * s + bob, z);
+        dummy.position.set(x, baseY + 1.25 * s + bob, z);
         dummy.updateMatrix();
         torso.setMatrixAt(n, dummy.matrix);
-        dummy.position.set(x, PAVE_Y + 1.95 * s + bob, z);
+        dummy.position.set(x, baseY + 1.95 * s + bob, z);
         dummy.updateMatrix();
         head.setMatrixAt(n, dummy.matrix);
 
@@ -163,7 +216,7 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
           [legR, 1],
         ] as const) {
           dummy.rotation.set(side * swing, heading, 0, 'YXZ');
-          dummy.position.set(x + cos * 0.1 * side * s, PAVE_Y + 0.85 * s + bob, z - sin * 0.1 * side * s);
+          dummy.position.set(x + cos * 0.1 * side * s, baseY + 0.85 * s + bob, z - sin * 0.1 * side * s);
           dummy.updateMatrix();
           mesh.setMatrixAt(n, dummy.matrix);
         }

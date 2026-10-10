@@ -3,6 +3,7 @@ import {
   SIGNAL_CYCLE,
   approach,
   desiredSpeed,
+  gapAhead,
   mustStop,
   signalAt,
   signalOffset,
@@ -103,5 +104,44 @@ describe('braking', () => {
     expect(pos).toBeLessThanOrEqual(line);
     expect(pos).toBeGreaterThan(line - 3);
     expect(v).toBeLessThan(0.2);
+  });
+});
+
+describe('looking ahead', () => {
+  const me = { x: 0, z: 0, dx: 1, dz: 0, len: 4 };
+
+  it('sees nothing on a clear road', () => {
+    expect(gapAhead(me, [])).toBeNull();
+    expect(gapAhead(me, [{ x: -10, z: 0, len: 4 }])).toBeNull(); // behind
+    expect(gapAhead(me, [{ x: 10, z: 8, len: 4 }])).toBeNull(); // in another lane well to the side
+    expect(gapAhead(me, [{ x: 60, z: 0, len: 4 }])).toBeNull(); // too far away to matter
+  });
+
+  it('measures the free space to the vehicle in front, bumper to bumper', () => {
+    // centres 12 m apart, each 4 m long: 12 - 4 - 1.2 margin
+    expect(gapAhead(me, [{ x: 12, z: 0, len: 4 }])).toBeCloseTo(6.8);
+  });
+
+  it('picks the nearest of several', () => {
+    const g = gapAhead(me, [
+      { x: 20, z: 0, len: 4 },
+      { x: 9, z: 0.5, len: 4 },
+    ]);
+    expect(g).toBeCloseTo(3.8);
+  });
+
+  it('works in any direction of travel, not just along an axis', () => {
+    const diag = { x: 0, z: 0, dx: Math.SQRT1_2, dz: Math.SQRT1_2, len: 4 };
+    expect(gapAhead(diag, [{ x: 10, z: 10, len: 4 }])).toBeCloseTo(Math.hypot(10, 10) - 4 - 1.2);
+    expect(gapAhead(diag, [{ x: 10, z: -10, len: 4 }])).toBeNull();
+  });
+
+  it('notices someone stepping across the road ahead, but not someone on the pavement', () => {
+    expect(gapAhead(me, [{ x: 8, z: 1.5, len: 1 }])).not.toBeNull();
+    expect(gapAhead(me, [{ x: 8, z: 4, len: 1 }])).toBeNull();
+  });
+
+  it('can report a negative gap when something is already too close', () => {
+    expect(gapAhead(me, [{ x: 3, z: 0, len: 4 }])).toBeLessThan(0);
   });
 });

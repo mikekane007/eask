@@ -79,11 +79,19 @@ export class GameService {
   readonly mapOpen = signal(true);
   readonly rulesOpen = signal(false);
   /** Live positions for the minimap. Plain object on purpose: it changes every frame and must not trigger change detection. */
-  readonly live: { x: number; z: number; rot: number; npcs: { id: string; x: number; z: number; on: boolean }[] } = {
+  readonly live: {
+    x: number;
+    z: number;
+    rot: number;
+    npcs: { id: string; x: number; z: number; on: boolean }[];
+    /** How many vehicles and background walkers are out right now (for checks and sound). */
+    stats: { vehicles: number; walkers: number };
+  } = {
     x: 0,
     z: 0,
     rot: 0,
     npcs: [],
+    stats: { vehicles: 0, walkers: 0 },
   };
   readonly joy = signal<{ x: number; y: number; dx: number; dy: number } | null>(null);
 

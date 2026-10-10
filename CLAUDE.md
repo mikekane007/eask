@@ -47,7 +47,7 @@ at a time, never the e2e suite with many workers locally, never `taskkill /IM no
 - [~] Playwright smoke tests written (intro, sleep, reload, people panel); still to add: walk to Grace Chapel, study, talk to Kwame. Not yet run locally; run in CI
 - [x] In-game rules screen (? button and intro) and live minimap (M button)
 - [x] City picker, Lille, Paris, Douai (drafts) and an English/French switch (ADR 0005)
-- [x] Real OpenStreetMap maps for all four cities (ADR 0006); next: roads for traffic and the crowd on real maps
+- [x] Real OpenStreetMap maps for all four cities with traffic and a crowd on the real streets (ADR 0006). Phase 2 done
 - [x] Phase 1 of the living-world roadmap: ambient clock, weather, traffic, crowd, sound (see docs/ROADMAP.md)
 - [ ] OWNER: review the draft conversations for Lille, Paris and Douai, then set `reviewed: true`
 - [ ] Translate the Accra conversations into French (currently English only)
