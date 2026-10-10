@@ -226,6 +226,8 @@ export async function createEngine(
   let hiddenFromUsual = false;
   /** 0 = the usual view from behind, 1 = looking down from above. */
   let tilt = 0;
+  /** 0 = walking about, 1 = in a conversation (the camera moves in). */
+  let talkK = 0;
   let holeOpen = 0;
 
   let hourShown = -1;
@@ -375,7 +377,16 @@ export async function createEngine(
       const legs = g.userData['legs'] as THREE.Group[],
         arms = g.userData['arms'] as THREE.Group[];
       const close = Math.hypot(p.x - g.position.x, p.z - g.position.z) < 5;
-      if (!close && !(talking && talking.P === P)) {
+      const on = st.word >= P.req && st.best[P.id] !== 'open';
+      const inTalk = talking?.P === P;
+      // a gentle breath, so nobody stands perfectly still
+      (g.userData['chest'] as THREE.Mesh).scale.set(
+        1 + Math.sin(now / 650 + i) * 0.015,
+        1,
+        1 + Math.sin(now / 650 + i) * 0.015,
+      );
+      if (!close && !inTalk) {
+        g.userData['waveT'] = 0;
         u.t += (u.dir * dt * 1.6) / u.len;
         if (u.t > 1) {
           u.t = 1;
@@ -398,10 +409,24 @@ export async function createEngine(
         d = Math.atan2(Math.sin(d), Math.cos(d));
         g.rotation.y += d * Math.min(1, dt * 8);
         legs.forEach((l) => (l.rotation.x *= 0.85));
-        arms[0].rotation.x = Math.sin(now / 300 + i) * 0.25 - 0.15;
-        arms[1].rotation.x *= 0.85;
+        const waveT = (g.userData['waveT'] as number | undefined) ?? 0;
+        if (inTalk) {
+          // talking with their hands
+          arms[0].rotation.x = -0.55 + Math.sin(now / 420 + i) * 0.35;
+          arms[1].rotation.x = -0.35 + Math.sin(now / 560 + i + 1) * 0.3;
+          arms[1].rotation.z = -0.08;
+        } else if (on && waveT < 1.8) {
+          // a friendly wave when you come over
+          g.userData['waveT'] = waveT + dt;
+          arms[1].rotation.x = -2.7;
+          arms[1].rotation.z = -0.1 + Math.sin(now / 110) * 0.35;
+          arms[0].rotation.x *= 0.85;
+        } else {
+          arms[0].rotation.x = Math.sin(now / 300 + i) * 0.25 - 0.15;
+          arms[1].rotation.x *= 0.85;
+          arms[1].rotation.z += (-0.08 - arms[1].rotation.z) * Math.min(1, dt * 6);
+        }
       }
-      const on = st.word >= P.req && st.best[P.id] !== 'open';
       const ln = svc.live.npcs[i];
       ln.x = g.position.x;
       ln.z = g.position.z;
@@ -502,6 +527,7 @@ export async function createEngine(
     if (audioClock > 0.25) {
       svc.live.stats.vehicles = (traffic?.visibleCount ?? 0) + (roadTraffic?.visibleCount ?? 0);
       svc.live.stats.walkers = crowd?.visibleCount ?? 0;
+      svc.live.stats.drawCalls = renderer.info.render.calls;
       if (svc.playing()) {
         sound.update(
           {
@@ -520,7 +546,9 @@ export async function createEngine(
       if (svc.playing() && churchAt) sound.bell(st.hour, Math.hypot(p.x - churchAt.x, p.z - churchAt.z));
       lastHour = st.hour;
     }
-    const zoom = svc.zoom();
+    talkK = easeOpen(talkK, talking !== null, realDt, 1.6);
+    const tk = talkK * talkK * (3 - 2 * talkK);
+    const zoom = svc.zoom() * (1 - 0.45 * tk);
     if (real) {
       // A building between the camera and the player: tilt towards a view from above, where roofs rarely get in the way.
       sightClock -= realDt;
@@ -543,7 +571,18 @@ export async function createEngine(
       cam.position.copy(camT);
       camInit = true;
     } else cam.position.lerp(camT, 1 - Math.exp(-dt * 5));
-    camL.lerp(tmpV.set(p.x, 1, p.z - 2), 1 - Math.exp(-dt * 6));
+    const partner = talking ? npcs.find((g) => g.userData['P'] === talking.P) : undefined;
+    // aim a little nearer the camera than the pair, so they sit above the conversation panel
+    if (partner) tmpV.set((p.x + partner.position.x) / 2, 1.4, (p.z + partner.position.z) / 2 + 4.5 * zoom);
+    else tmpV.set(p.x, 1, p.z - 2);
+    camL.lerp(tmpV, 1 - Math.exp(-dt * 6));
+    if (partner) {
+      // face the person you are talking to, and talk with your free hand
+      const want = Math.atan2(partner.position.x - p.x, partner.position.z - p.z);
+      player.rotation.y +=
+        Math.atan2(Math.sin(want - player.rotation.y), Math.cos(want - player.rotation.y)) * Math.min(1, dt * 6);
+      (player.userData['arms'] as THREE.Group[])[0].rotation.x = -0.45 + Math.sin(now / 470) * 0.3;
+    }
     cam.lookAt(camL);
     sky.position.copy(cam.position);
     if (real) {

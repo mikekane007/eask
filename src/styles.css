@@ -741,6 +741,26 @@ button:focus-visible {
   height: 62px;
   border-radius: 20px 20px 14px 14px;
 }
+.l-hair.afro {
+  top: -8px;
+  width: 54px;
+  height: 46px;
+  border-radius: 50%;
+}
+.l-hair.bun::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  border-radius: 50%;
+  background: inherit;
+}
+.seg.wrap {
+  flex-wrap: wrap;
+}
 .l-head {
   top: 10px;
   width: 34px;

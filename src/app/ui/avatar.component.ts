@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
-import { HAIR_COLORS, OUTFITS, SKIN_TONES, css, type Avatar } from '../game/avatar';
+import { HAIR_COLORS, HAIR_STYLES, type HairStyle, OUTFITS, SKIN_TONES, css, type Avatar } from '../game/avatar';
+import type { UiKey } from '../game/i18n/ui';
 import { GameService } from '../game/game.service';
 import { I18n } from '../game/i18n/i18n.service';
 
@@ -13,7 +14,7 @@ import { I18n } from '../game/i18n/i18n.service';
         <div class="modal-in avatar">
           <h2>{{ i18n.t('lookTitle') }}</h2>
           <div class="look" aria-hidden="true">
-            <i class="l-hair" [class.long]="a().female" [style.background]="hair(a())"></i>
+            <i [class]="'l-hair ' + styles[a().style]" [style.background]="hair(a())"></i>
             <i class="l-head" [style.background]="skin(a())"></i>
             <i class="l-body" [class.dress]="a().female" [style.background]="outfit(a())"></i>
             <i class="l-leg" [style.background]="a().female ? skin(a()) : '#22303c'"></i>
@@ -64,6 +65,19 @@ import { I18n } from '../game/i18n/i18n.service';
               ></button>
             }
           </div>
+          <p class="opt-title">{{ i18n.t('lookStyle') }}</p>
+          <div class="seg wrap" role="group">
+            @for (st of styles; track st; let i = $index) {
+              <button
+                type="button"
+                [class.on]="a().style === i"
+                [attr.aria-pressed]="a().style === i"
+                (click)="set({ style: i })"
+              >
+                {{ i18n.t(styleKey[st]) }}
+              </button>
+            }
+          </div>
           <p class="opt-title">{{ i18n.t('lookOutfit') }}</p>
           <div class="swatches">
             @for (o of outfits; track $index) {
@@ -91,6 +105,13 @@ export class AvatarComponent {
   readonly skins = SKIN_TONES;
   readonly hairs = HAIR_COLORS;
   readonly outfits = OUTFITS;
+  readonly styles = HAIR_STYLES;
+  readonly styleKey: Record<HairStyle, UiKey> = {
+    short: 'styleShort',
+    afro: 'styleAfro',
+    long: 'styleLong',
+    bun: 'styleBun',
+  };
   readonly hex = css;
 
   a = this.svc.avatar;

@@ -10,6 +10,8 @@ const INSET = 0.55; // how far in from the block edge the pavement loop runs
 const PAVE_Y = 0.35;
 const SHIRTS = [0xd7263d, 0x2e86c1, 0xf2b705, 0x1e8a4c, 0x8e44ad, 0xe67e22, 0xeeeeee, 0x34495e, 0xc0392b, 0x16a085];
 const PANTS = [0x1d2a36, 0x3b2a20, 0x2c3e50, 0x4a4a3a, 0x555b61];
+const HAIR = [0x15100c, 0x15100c, 0x3b2a20, 0x6b4630, 0xb08a4a, 0x9a9590];
+const tmpC = new THREE.Color();
 
 const toLinear = (hex: number) => new THREE.Color(hex).convertSRGBToLinear();
 
@@ -63,8 +65,16 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
   const head = new THREE.InstancedMesh(headGeo, white, CROWD);
   const legL = new THREE.InstancedMesh(legGeo, white, CROWD);
   const legR = new THREE.InstancedMesh(legGeo, white, CROWD);
+  // arms swing against the legs; hair sits on the head
+  const armGeo = new THREE.BoxGeometry(0.1, 0.68, 0.12);
+  armGeo.translate(0, -0.34, 0); // pivot at the shoulder
+  const armL = new THREE.InstancedMesh(armGeo, white, CROWD);
+  const armR = new THREE.InstancedMesh(armGeo, white, CROWD);
+  const hairGeo = new THREE.SphereGeometry(0.215, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2);
+  const hair = new THREE.InstancedMesh(hairGeo, white, CROWD);
+  const parts = [torso, head, legL, legR, armL, armR, hair];
   torso.castShadow = true;
-  for (const m of [torso, head, legL, legR]) {
+  for (const m of parts) {
     m.frustumCulled = false;
     scene.add(m);
   }
@@ -101,8 +111,13 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
     const pants = toLinear(PANTS[Math.floor(rnd() * PANTS.length)]);
     legL.setColorAt(n, pants);
     legR.setColorAt(n, pants);
+    // sleeves match the shirt
+    torso.getColorAt(n, tmpC);
+    armL.setColorAt(n, tmpC);
+    armR.setColorAt(n, tmpC);
+    hair.setColorAt(n, toLinear(HAIR[Math.floor(rnd() * HAIR.length)]));
   }
-  for (const m of [torso, head, legL, legR]) if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  for (const m of parts) if (m.instanceColor) m.instanceColor.needsUpdate = true;
 
   const baseY = routes ? 0.04 : PAVE_Y;
   const dummy = new THREE.Object3D();
@@ -111,7 +126,7 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
     dummy.scale.setScalar(0);
     dummy.rotation.set(0, 0, 0);
     dummy.updateMatrix();
-    for (const m of [torso, head, legL, legR]) m.setMatrixAt(n, dummy.matrix);
+    for (const m of parts) m.setMatrixAt(n, dummy.matrix);
   };
   walkers.forEach((_, n) => {
     hide(n);
@@ -213,6 +228,9 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
         dummy.position.set(x, baseY + 1.95 * s + bob, z);
         dummy.updateMatrix();
         head.setMatrixAt(n, dummy.matrix);
+        dummy.position.set(x, baseY + 2.0 * s + bob, z);
+        dummy.updateMatrix();
+        hair.setMatrixAt(n, dummy.matrix);
 
         const cos = Math.cos(heading);
         const sin = Math.sin(heading);
@@ -225,9 +243,18 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
           dummy.updateMatrix();
           mesh.setMatrixAt(n, dummy.matrix);
         }
+        for (const [mesh, side] of [
+          [armL, -1],
+          [armR, 1],
+        ] as const) {
+          dummy.rotation.set(-side * swing * 0.8, heading, side * 0.06, 'YXZ');
+          dummy.position.set(x + cos * 0.31 * side * s, baseY + 1.66 * s + bob, z - sin * 0.31 * side * s);
+          dummy.updateMatrix();
+          mesh.setMatrixAt(n, dummy.matrix);
+        }
       });
       visible = count;
-      for (const m of [torso, head, legL, legR]) m.instanceMatrix.needsUpdate = true;
+      for (const m of parts) m.instanceMatrix.needsUpdate = true;
     },
   };
 }

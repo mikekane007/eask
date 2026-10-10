@@ -379,7 +379,7 @@ describe('choosing a character', () => {
     svc.begin();
     expect(svc.avatarOpen()).toBe(true);
     expect(svc.playing()).toBe(false);
-    svc.setAvatar({ female: true, skin: 1, hair: 2, outfit: 3 });
+    svc.setAvatar({ female: true, skin: 1, hair: 2, outfit: 3, style: 1 });
     svc.confirmAvatar();
     expect(svc.avatarOpen()).toBe(false);
     expect(svc.playing()).toBe(true);
@@ -387,10 +387,10 @@ describe('choosing a character', () => {
 
   it('remembers the look and does not ask again', () => {
     const first = makeService();
-    first.setAvatar({ female: true, skin: 1, hair: 2, outfit: 3 });
+    first.setAvatar({ female: true, skin: 1, hair: 2, outfit: 3, style: 1 });
     first.confirmAvatar();
     const second = makeService();
-    expect(second.avatar()).toEqual({ female: true, skin: 1, hair: 2, outfit: 3 });
+    expect(second.avatar()).toEqual({ female: true, skin: 1, hair: 2, outfit: 3, style: 1 });
     second.begin();
     expect(second.avatarOpen()).toBe(false);
     expect(second.playing()).toBe(true);

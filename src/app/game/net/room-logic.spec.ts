@@ -16,7 +16,7 @@ const row = (over: Record<string, unknown> = {}) => ({
   x: 1,
   z: 2,
   rot: 0.5,
-  look: encodeLook({ female: true, skin: 3, hair: 1, outfit: 2 }),
+  look: encodeLook({ female: true, skin: 3, hair: 1, outfit: 2, style: 1 }),
   t: 100,
   ...over,
 });
@@ -59,7 +59,7 @@ describe('parsePeer', () => {
   it('reads a well-formed player', () => {
     const p = parsePeer('u1', row());
     expect(p).toMatchObject({ id: 'u1', name: 'Ama', x: 1, z: 2, rot: 0.5, t: 100 });
-    expect(p?.look).toEqual({ female: true, skin: 3, hair: 1, outfit: 2 });
+    expect(p?.look).toEqual({ female: true, skin: 3, hair: 1, outfit: 2, style: 1 });
   });
   it('rejects anything else', () => {
     for (const bad of [null, 'x', 5, {}, row({ x: 'a' }), row({ z: NaN }), row({ name: 7 }), row({ t: undefined })])

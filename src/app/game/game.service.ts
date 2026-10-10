@@ -109,14 +109,14 @@ export class GameService {
     /** Other players in the room, for the minimap. */
     peers: readonly { id: string; name: string; x: number; z: number }[];
     /** How many vehicles and background walkers are out right now (for checks and sound). */
-    stats: { vehicles: number; walkers: number };
+    stats: { vehicles: number; walkers: number; drawCalls: number };
   } = {
     x: 0,
     z: 0,
     rot: 0,
     npcs: [],
     peers: [],
-    stats: { vehicles: 0, walkers: 0 },
+    stats: { vehicles: 0, walkers: 0, drawCalls: 0 },
   };
   readonly joy = signal<{ x: number; y: number; dx: number; dy: number } | null>(null);
 

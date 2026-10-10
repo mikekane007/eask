@@ -14,7 +14,10 @@ interface Remote {
 
 const disposeBody = (o: THREE.Object3D): void => {
   o.traverse((c) => {
-    if (c instanceof THREE.Mesh) (c.geometry as THREE.BufferGeometry).dispose();
+    if (c instanceof THREE.Mesh) {
+      const geo = c.geometry as THREE.BufferGeometry;
+      if (!geo.userData['shared']) geo.dispose();
+    }
   });
 };
 

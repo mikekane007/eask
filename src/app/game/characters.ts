@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { type Avatar, HAIR_COLORS, OUTFITS, SKIN_TONES } from './avatar';
+import { BufferGeometryUtils } from 'three/examples/jsm/utils/BufferGeometryUtils';
+import { type Avatar, HAIR_COLORS, HAIR_STYLES, type HairStyle, OUTFITS, SKIN_TONES } from './avatar';
 import type { GameService } from './game.service';
 import type { Kit, Tex } from './kit';
 import { B, bMin, roadC } from './layout';
@@ -17,8 +18,37 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
     print?: Tex | null;
     wrap?: Tex | null;
     hair?: number;
-    longHair?: boolean;
+    style?: HairStyle;
+    /** Colour of a scarf round the neck, if any. */
+    scarf?: number | null;
   }
+  const mergeAll = (parts: THREE.BufferGeometry[]): THREE.BufferGeometry => {
+    const merged = BufferGeometryUtils.mergeBufferGeometries(parts.map((p) => p.toNonIndexed()));
+    for (const p of parts) p.dispose();
+    // shared by everyone in the city: never disposed when one character is rebuilt
+    merged.userData['shared'] = true;
+    return merged;
+  };
+  const FACE = mergeAll([
+    new THREE.SphereGeometry(0.045, 6, 4).translate(-0.13, 2.62, 0.32),
+    new THREE.SphereGeometry(0.045, 6, 4).translate(0.13, 2.62, 0.32),
+    new THREE.BoxGeometry(0.15, 0.035, 0.03).translate(0, 2.44, 0.335),
+  ]);
+  const BROWS = mergeAll([
+    new THREE.BoxGeometry(0.13, 0.035, 0.03).translate(-0.13, 2.72, 0.33),
+    new THREE.BoxGeometry(0.13, 0.035, 0.03).translate(0.13, 2.72, 0.33),
+  ]);
+  const cap = () => new THREE.SphereGeometry(0.375, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2.1).translate(0, 2.62, -0.02);
+  const HAIR: Record<HairStyle, THREE.BufferGeometry> = {
+    short: mergeAll([cap()]),
+    afro: mergeAll([new THREE.SphereGeometry(0.5, 14, 10).scale(1, 0.85, 1).translate(0, 2.75, -0.06)]),
+    long: mergeAll([cap(), new THREE.CylinderGeometry(0.31, 0.22, 0.75, 10).translate(0, 2.3, -0.2)]),
+    bun: mergeAll([cap(), new THREE.SphereGeometry(0.17, 10, 8).translate(0, 3.0, -0.2)]),
+  };
+  const SCARF = mergeAll([
+    new THREE.TorusGeometry(0.27, 0.085, 6, 14).rotateX(Math.PI / 2).translate(0, 2.17, 0),
+    new THREE.BoxGeometry(0.14, 0.42, 0.06).translate(0.12, 1.92, 0.3),
+  ]);
   function makePerson({
     shirt = 0xd7263d,
     skin = 0x5b3a24,
@@ -27,7 +57,8 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
     print = null,
     wrap = null,
     hair = 0x15100c,
-    longHair = false,
+    style = 'short',
+    scarf = null,
   }: PersonOpts = {}) {
     const g = new THREE.Group();
     const skinM = M(skin);
@@ -44,7 +75,7 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
     }
     if (dress) mesh(new THREE.CylinderGeometry(0.38, 0.66, 1, 14), clothM, 0, 0.78, 0, g);
     else mesh(new THREE.CylinderGeometry(0.38, 0.36, 0.28, 12), M(pants), 0, 1.02, 0, g);
-    mesh(new THREE.CylinderGeometry(0.47, 0.37, 1, 12), clothM, 0, 1.62, 0, g);
+    const chest = mesh(new THREE.CylinderGeometry(0.47, 0.37, 1, 12), clothM, 0, 1.62, 0, g);
     mesh(new THREE.SphereGeometry(0.47, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), clothM, 0, 2.1, 0, g).scale.set(
       1,
       0.35,
@@ -63,7 +94,9 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
     mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.25, 8), skinM, 0, 2.22, 0, g);
     const head = mesh(new THREE.SphereGeometry(0.36, 16, 12), skinM, 0, 2.58, 0, g);
     head.scale.set(1, 1.08, 1);
-    for (const s of [-1, 1]) mesh(new THREE.SphereGeometry(0.045, 6, 4), M(0x111111), 0.13 * s, 2.62, 0.32, g, false);
+    // face: eyes and mouth in one shape, eyebrows in another (two draws instead of five)
+    mesh(FACE, M(0x1a1210), 0, 0, 0, g, false);
+    mesh(BROWS, M(hair), 0, 0, 0, g, false);
     if (wrap) {
       const w = mesh(
         new THREE.CylinderGeometry(0.4, 0.36, 0.42, 14),
@@ -75,10 +108,9 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
       );
       w.rotation.x = -0.2;
       mesh(new THREE.SphereGeometry(0.28, 10, 8), new THREE.MeshLambertMaterial({ map: wrap }), 0.15, 3.12, -0.1, g);
-    } else {
-      mesh(new THREE.SphereGeometry(0.375, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2.1), M(hair), 0, 2.62, -0.02, g);
-      if (longHair) mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.7, 10), M(hair), 0, 2.3, -0.2, g);
-    }
+    } else mesh(HAIR[style], M(hair), 0, 0, 0, g);
+    if (scarf !== null) mesh(SCARF, M(scarf), 0, 0, 0, g);
+    g.userData['chest'] = chest;
     g.userData['legs'] = legs;
     g.userData['arms'] = arms;
     return g;
@@ -93,7 +125,7 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
       hair: HAIR_COLORS[a.hair],
       pants: 0x22303c,
       dress: a.female,
-      longHair: a.female,
+      style: HAIR_STYLES[a.style],
     });
     const arms = hero.userData['arms'] as THREE.Group[];
     const bk = box(0.42, 0.55, 0.14, 0x1a1a1a, 0, 0, 0, arms[1]);
@@ -110,7 +142,8 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
       player.remove(body);
       body.traverse((o) => {
         if (o instanceof THREE.Mesh) {
-          (o.geometry as THREE.BufferGeometry).dispose();
+          const geo = o.geometry as THREE.BufferGeometry;
+          if (!geo.userData['shared']) geo.dispose();
         }
       });
     }
@@ -169,6 +202,9 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
       pants: [0x1d2a36, 0x3b2a20, 0x2c3e50, 0x4a4a3a][n % 4],
       dress: women,
       wrap: theme.waxPrint && women && n % 2 ? print : null,
+      style: (women ? (['long', 'bun', 'afro'] as const) : (['short', 'short', 'afro'] as const))[n % 3],
+      // a scarf for some people in the cooler French cities
+      scarf: !theme.waxPrint && n % 3 === 1 ? [0x8e2b2b, 0x2e4a6b, 0xc9a227, 0x3c5a3c][n % 4] : null,
     });
     // Each person paces a short straight stretch of street: from the real map if there is one, else the grid.
     const [axis, k, blk, frac] = P.spot;
