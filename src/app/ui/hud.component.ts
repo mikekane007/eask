@@ -3,10 +3,12 @@ import { GameService } from '../game/game.service';
 import { I18n } from '../game/i18n/i18n.service';
 import { RoomService } from '../game/net/room.service';
 import { SoundService } from '../game/sound.service';
+import { IconComponent } from './icon.component';
 
 @Component({
   selector: 'app-hud',
   standalone: true,
+  imports: [IconComponent],
   template: `
     @if (svc.city()) {
       <div class="hud">
@@ -33,16 +35,18 @@ import { SoundService } from '../game/sound.service';
       </div>
       <div class="side">
         <button class="btn-r" [attr.aria-label]="i18n.t('showPeople')" (click)="svc.goalsOpen.set(!svc.goalsOpen())">
-          {{ svc.goalsOpen() ? '‹' : '›' }}
+          <app-icon [name]="svc.goalsOpen() ? 'people-close' : 'people'" />
         </button>
-        <button class="btn-r" [attr.aria-label]="i18n.t('gameRules')" (click)="svc.rulesOpen.set(true)">?</button>
+        <button class="btn-r" [attr.aria-label]="i18n.t('gameRules')" (click)="svc.rulesOpen.set(true)">
+          <app-icon name="help" />
+        </button>
         <button
           class="btn-r"
           [class.off]="room.status() !== 'in'"
           [attr.aria-label]="i18n.t('togetherButton')"
           (click)="room.menuOpen.set(true)"
         >
-          👥
+          <app-icon name="together" />
         </button>
         <button
           class="btn-r"
@@ -51,10 +55,10 @@ import { SoundService } from '../game/sound.service';
           [attr.aria-pressed]="svc.autopilot() !== null"
           (click)="svc.autopilot() ? svc.stopAutopilot() : svc.autopilotMenu.set(true)"
         >
-          ⇢
+          <app-icon name="walk" />
         </button>
         <button class="btn-r" [attr.aria-label]="i18n.t('toggleMap')" (click)="svc.mapOpen.set(!svc.mapOpen())">
-          M
+          <app-icon name="map" />
         </button>
         <button
           class="btn-r"
@@ -63,7 +67,7 @@ import { SoundService } from '../game/sound.service';
           [attr.aria-pressed]="!sound.muted()"
           (click)="sound.toggleMute()"
         >
-          ♪
+          <app-icon [name]="sound.muted() ? 'mute' : 'sound'" />
         </button>
         <button
           class="btn-r small"
@@ -77,14 +81,14 @@ import { SoundService } from '../game/sound.service';
           [attr.aria-label]="i18n.t('zoomIn')"
           (click)="svc.zoom.set(Math.max(0.5, svc.zoom() - 0.15))"
         >
-          +
+          <app-icon name="plus" />
         </button>
         <button
           class="btn-r"
           [attr.aria-label]="i18n.t('zoomOut')"
           (click)="svc.zoom.set(Math.min(1.8, svc.zoom() + 0.15))"
         >
-          −
+          <app-icon name="minus" />
         </button>
       </div>
     }

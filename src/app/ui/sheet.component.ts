@@ -4,11 +4,13 @@ import { I18n } from '../game/i18n/i18n.service';
 import { SoundService } from '../game/sound.service';
 import { OUTCOMES, VERDICT_KEY } from '../game/state';
 import { MIN_WORDS, wordCount } from '../game/typed-answer';
+import { PortraitComponent } from './portrait.component';
 import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types';
 
 @Component({
   selector: 'app-sheet',
   standalone: true,
+  imports: [PortraitComponent],
   template: `
     @if (svc.sheetVisible()) {
       <div class="sheet">
@@ -17,14 +19,22 @@ import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types'
             @switch (t.phase) {
               @case ('question') {
                 <div class="who">
-                  <div>
+                  <app-portrait [person]="t.P" />
+                  <div class="who-name">
                     <h2>{{ t.P.name }}</h2>
                     <div class="round">{{ i18n.tr(t.P.role) }} · {{ roundText(t) }}</div>
                   </div>
                   <div class="open">
                     <div class="lbl">{{ i18n.t('openness') }}</div>
-                    <div class="bar" style="height:6px">
-                      <i [style.width.%]="t.open" [style.background]="openColor(t.open)"></i>
+                    <div
+                      class="gauge"
+                      role="meter"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      [attr.aria-valuenow]="t.open"
+                      [attr.aria-label]="i18n.t('openness')"
+                    >
+                      <i [style.left.%]="t.open"></i>
                     </div>
                   </div>
                 </div>
@@ -63,14 +73,22 @@ import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types'
               }
               @case ('feedback') {
                 <div class="who">
-                  <div>
+                  <app-portrait [person]="t.P" />
+                  <div class="who-name">
                     <h2>{{ t.P.name }}</h2>
                     <div class="round">{{ i18n.tr(t.P.role) }} · {{ roundText(t) }}</div>
                   </div>
                   <div class="open">
                     <div class="lbl">{{ i18n.t('openness') }}</div>
-                    <div class="bar" style="height:6px">
-                      <i [style.width.%]="t.open" [style.background]="openColor(t.open)"></i>
+                    <div
+                      class="gauge"
+                      role="meter"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      [attr.aria-valuenow]="t.open"
+                      [attr.aria-label]="i18n.t('openness')"
+                    >
+                      <i [style.left.%]="t.open"></i>
                     </div>
                   </div>
                 </div>
@@ -133,7 +151,8 @@ import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types'
             }
             @if (npc(); as P) {
               <div class="who">
-                <div>
+                <app-portrait [person]="P" />
+                <div class="who-name">
                   <h2>{{ P.name }}</h2>
                   <div class="sub">
                     {{ i18n.tr(P.role) }}
@@ -202,7 +221,6 @@ export class SheetComponent {
     const c = this.svc.current();
     return c?.kind === 'npc' ? c.ref : null;
   });
-  openColor = (o: number) => (o >= 70 ? 'var(--green)' : o >= 40 ? 'var(--amber)' : 'var(--red)');
   roundText = (t: Talk) => this.i18n.t('questionOf', { n: t.round + 1, total: t.P.rounds.length });
   best = (t: Talk) => t.P.rounds[t.round].a.find((x) => x[1] === 'good') ?? t.P.rounds[t.round].a[0];
   effects(o: PlaceOption): string {

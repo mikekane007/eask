@@ -102,6 +102,7 @@ const EN = {
   gfxHint: 'Auto lowers the detail by itself if the game runs slowly on this device.',
   gfxLowered: 'The game was running slowly, so graphics are now set to {level}.',
   // Character
+  loadingStreets: 'Preparing the streets…',
   lookTitle: 'Your character',
   lookGuy: 'Guy',
   lookLady: 'Lady',
@@ -262,6 +263,7 @@ const FR: Record<UiKey, string> = {
   gfxAuto: 'Auto',
   gfxHint: 'Auto réduit le détail tout seul si le jeu est lent sur cet appareil.',
   gfxLowered: 'Le jeu était lent : les graphismes sont maintenant réglés sur {level}.',
+  loadingStreets: 'Préparation des rues…',
   lookTitle: 'Votre personnage',
   lookGuy: 'Garçon',
   lookLady: 'Fille',

@@ -14,6 +14,8 @@ export default defineConfig({
   reporter: CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   // CI draws the 3D scene in software at a few frames a second, which can hold up a DOM update for a few seconds.
   expect: { timeout: CI ? 10_000 : 5_000 },
+  // each test loads a 3D city; slow machines (and CI's software graphics) need more than the default 30 s
+  timeout: 60_000,
   use: {
     baseURL: `http://localhost:${PORT}`,
     trace: 'retain-on-failure',

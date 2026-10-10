@@ -4,6 +4,7 @@ import { type Avatar, HAIR_COLORS, HAIR_STYLES, type HairStyle, OUTFITS, SKIN_TO
 import type { GameService } from './game.service';
 import type { Kit, Tex } from './kit';
 import { B, bMin, roadC } from './layout';
+import { npcLook } from './npc-look';
 import type { City } from './types';
 
 /** The player and the people on the street. */
@@ -186,7 +187,8 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
     g.fillText('?', 62, 58);
   });
   const npcs = city.people.map((P, n) => {
-    const women = P.female === true;
+    const look = npcLook(P, n, theme);
+    const women = look.female;
     const c = new THREE.Color(P.shirt).getStyle();
     const print = waxPrint(
       c,
@@ -196,15 +198,14 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
     );
     const g = makePerson({
       print: theme.waxPrint && (women || n % 2) ? print : null,
-      shirt: P.shirt,
-      skin: P.skin ?? theme.skins[n % theme.skins.length],
-      hair: P.hair,
+      shirt: look.shirt,
+      skin: look.skin,
+      hair: look.hair,
       pants: [0x1d2a36, 0x3b2a20, 0x2c3e50, 0x4a4a3a][n % 4],
       dress: women,
       wrap: theme.waxPrint && women && n % 2 ? print : null,
-      style: (women ? (['long', 'bun', 'afro'] as const) : (['short', 'short', 'afro'] as const))[n % 3],
-      // a scarf for some people in the cooler French cities
-      scarf: !theme.waxPrint && n % 3 === 1 ? [0x8e2b2b, 0x2e4a6b, 0xc9a227, 0x3c5a3c][n % 4] : null,
+      style: look.style,
+      scarf: look.scarf,
     });
     // Each person paces a short straight stretch of street: from the real map if there is one, else the grid.
     const [axis, k, blk, frac] = P.spot;

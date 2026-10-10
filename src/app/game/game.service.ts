@@ -87,6 +87,8 @@ export class GameService {
   /** True once the player has chosen a look, so the choice screen is shown only the first time. */
   readonly avatarChosen = signal(false);
   readonly avatarOpen = signal(false);
+  /** False while the chosen city's 3D streets are still being prepared. */
+  readonly worldReady = signal(false);
   /** Where autopilot is taking the player, or null when walking by hand. */
   readonly autopilot = signal<AutoTarget | null>(null);
   readonly autopilotMenu = signal(false);
@@ -196,6 +198,7 @@ export class GameService {
     if (!city) return;
     this.cityId.set(id);
     this.realMap.set(null);
+    this.worldReady.set(false);
     const raw = this.readSave(id);
     const s: GameState = { ...freshState(), ...raw };
     if (!raw || (!s.x && !s.z)) {

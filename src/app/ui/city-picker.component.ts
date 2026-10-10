@@ -1,13 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { GameService } from '../game/game.service';
 import { I18n } from '../game/i18n/i18n.service';
+import { CityArtComponent } from './city-art.component';
 import { LangSwitchComponent } from './lang-switch.component';
 
 /** First screen: choose a city. Each city keeps its own saved progress. */
 @Component({
   selector: 'app-city-picker',
   standalone: true,
-  imports: [LangSwitchComponent],
+  imports: [LangSwitchComponent, CityArtComponent],
   template: `
     @if (!svc.city()) {
       <div class="modal picker">
@@ -19,6 +20,7 @@ import { LangSwitchComponent } from './lang-switch.component';
           <div class="cities">
             @for (c of svc.cities; track c.id) {
               <button class="city" [id]="'city-' + c.id" (click)="svc.selectCity(c.id)">
+                <app-city-art [city]="c.id" />
                 <span class="city-country">{{ i18n.tr(c.country) }}</span>
                 <span class="city-name">{{ c.name }}</span>
                 <span class="city-tag">{{ i18n.tr(c.tagline) }}</span>

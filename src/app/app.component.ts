@@ -124,6 +124,9 @@ export class AppComponent implements OnDestroy {
       }
       this.engine = engine;
       engine.start();
+      this.zone.run(() => {
+        this.svc.worldReady.set(true);
+      });
     });
   }
 
