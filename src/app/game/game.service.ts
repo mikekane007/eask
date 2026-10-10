@@ -14,6 +14,11 @@ const storageKey = (cityId: string) => `goandtell:${cityId}`;
 const LEGACY_KEY = 'goandtell';
 const AVATAR_KEY = 'goandtell:avatar';
 
+export interface AutoTarget {
+  kind: 'place' | 'npc';
+  id: string;
+}
+
 export type Near = { kind: 'place'; ref: Place } | { kind: 'npc'; ref: Person };
 
 export interface Talk {
@@ -80,6 +85,9 @@ export class GameService {
   /** True once the player has chosen a look, so the choice screen is shown only the first time. */
   readonly avatarChosen = signal(false);
   readonly avatarOpen = signal(false);
+  /** Where autopilot is taking the player, or null when walking by hand. */
+  readonly autopilot = signal<AutoTarget | null>(null);
+  readonly autopilotMenu = signal(false);
   private startAfterAvatar = false;
   readonly playing = signal(false);
   readonly goalsOpen = signal(false);
@@ -193,6 +201,7 @@ export class GameService {
     this.current.set(null);
     this.talking.set(null);
     this.playing.set(false);
+    this.autopilot.set(null);
   }
 
   /** Back to the city picker. Progress is already saved after every meaningful change. */
@@ -203,6 +212,8 @@ export class GameService {
     this.talking.set(null);
     this.rulesOpen.set(false);
     this.goalsOpen.set(false);
+    this.autopilot.set(null);
+    this.autopilotMenu.set(false);
     this.joy.set(null);
     this.cityId.set(null);
     this.realMap.set(null);
@@ -229,6 +240,19 @@ export class GameService {
 
   start(): void {
     this.playing.set(true);
+  }
+
+  /** Walk to a place or person by yourself. The engine finds the way; any key press or touch takes the controls back. */
+  goTo(target: AutoTarget): void {
+    this.autopilotMenu.set(false);
+    this.autopilot.set(target);
+  }
+
+  /** Ends autopilot. `blocked` means no way was found, which the player is told. */
+  stopAutopilot(why?: 'blocked'): void {
+    if (this.autopilot() === null) return;
+    this.autopilot.set(null);
+    if (why === 'blocked') this.toast(this.i18n.t('autoBlocked'));
   }
 
   /** The Step out button: the first time, ask for a look before starting. */
@@ -276,6 +300,7 @@ export class GameService {
     this.state.set({ ...freshState(), x: sp.x, z: sp.z });
     this.hasSave.set(false);
     this.teleport(sp.x, sp.z);
+    this.autopilot.set(null);
     this.save();
     this.current.set(null);
     this.talking.set(null);
@@ -401,6 +426,7 @@ export class GameService {
   }
 
   startTalk(P: Person): void {
+    this.autopilot.set(null);
     this.state.update((s) => {
       s = this.passHours(s, 1);
       return { ...s, body: clamp(s.body - 8) };

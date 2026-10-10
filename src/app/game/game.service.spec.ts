@@ -409,3 +409,34 @@ describe('choosing a character', () => {
     expect(svc.avatarChosen()).toBe(false);
   });
 });
+
+describe('autopilot', () => {
+  it('goes to a chosen place and stops when asked', () => {
+    const svc = makeService();
+    svc.autopilotMenu.set(true);
+    svc.goTo({ kind: 'place', id: 'church' });
+    expect(svc.autopilot()).toEqual({ kind: 'place', id: 'church' });
+    expect(svc.autopilotMenu()).toBe(false);
+    svc.stopAutopilot();
+    expect(svc.autopilot()).toBeNull();
+  });
+
+  it('tells the player when there is no way, and only when autopilot was running', () => {
+    const svc = makeService();
+    svc.stopAutopilot('blocked');
+    expect(svc.toastMsg()).toBeNull();
+    svc.goTo({ kind: 'npc', id: PEOPLE[0].id });
+    svc.stopAutopilot('blocked');
+    expect(svc.toastMsg()).toMatch(/no way/i);
+  });
+
+  it('ends when a conversation starts or the city is left', () => {
+    const svc = makeService();
+    svc.goTo({ kind: 'npc', id: PEOPLE[0].id });
+    svc.startTalk(PEOPLE[0]);
+    expect(svc.autopilot()).toBeNull();
+    svc.goTo({ kind: 'place', id: 'home' });
+    svc.leaveCity();
+    expect(svc.autopilot()).toBeNull();
+  });
+});

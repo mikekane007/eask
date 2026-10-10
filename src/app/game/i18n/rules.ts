@@ -32,6 +32,8 @@ const EN: RulesDoc = {
       items: [
         'Move: **W A S D** or the **arrow keys**. On a phone, drag anywhere on the street.',
         'Walk into a **gold ring** to open a place or start a conversation.',
+        '**⇢** button (autopilot): pick the church, the café, home or a person and your character walks there by itself. Press any key or touch the controls to take over again.',
+        'Choose how your character looks from the first screen of each city: **Your character**.',
         'Traffic obeys the signals and stops for you, but busy roads are still best crossed with care. Rush hours are busier than nights.',
         '**M** button: show or hide the map. **♪**: sound on or off. **+ / −**: zoom. **›**: people and progress. **?**: these rules.',
       ],
@@ -112,6 +114,8 @@ const FR: RulesDoc = {
       items: [
         'Se déplacer : **W A S D** ou les **flèches**. Sur téléphone, faites glisser le doigt n’importe où dans la rue.',
         'Entrez dans un **cercle doré** pour ouvrir un lieu ou engager une conversation.',
+        'Bouton **⇢** (pilote automatique) : choisissez l’église, le café, la maison ou une personne et votre personnage s’y rend tout seul. Appuyez sur une touche ou touchez les commandes pour reprendre la main.',
+        'Choisissez l’apparence de votre personnage sur le premier écran de chaque ville : **Votre personnage**.',
         'La circulation respecte les feux et s’arrête pour vous, mais les grandes routes se traversent toujours avec prudence. Les heures de pointe sont plus chargées que les nuits.',
         'Bouton **M** : afficher ou masquer la carte. **♪** : son activé ou coupé. **+ / −** : zoom. **›** : personnes et progression. **?** : ces règles.',
       ],

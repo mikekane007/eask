@@ -8,6 +8,7 @@ import { createInput } from './input';
 import { createKit } from './kit';
 import { H } from './layout';
 import { createLighting } from './lighting';
+import { type Pt, findPath } from './pathfind';
 import { createPedestrians } from './pedestrians';
 import { buildGraph, networks } from './map/road-graph';
 import { createRoadTraffic } from './map/road-traffic';
@@ -166,6 +167,53 @@ export async function createEngine(
         z > H - r ||
         solids.some((s) => x > s.x0 - r && x < s.x1 + r && z > s.z0 - r && z < s.z1 + r);
 
+  // Autopilot: walk a route found around the buildings to the chosen place or person.
+  let route: Pt[] | null = null;
+  let repathIn = 0;
+  function autoSteer(dt: number): Pt {
+    const stop = { x: 0, z: 0 };
+    const target = svc.autopilot();
+    if (!target) return stop;
+    const p = player.position;
+    let goal: Pt | null = null;
+    if (target.kind === 'place') {
+      const place = city.places.find((pl) => pl.id === target.id);
+      if (place) goal = svc.markerOf(place);
+    } else {
+      const n = svc.live.npcs.find((q) => q.id === target.id);
+      if (n) goal = { x: n.x, z: n.z };
+    }
+    if (!goal) {
+      zone.run(() => {
+        svc.stopAutopilot();
+      });
+      return stop;
+    }
+    repathIn -= dt;
+    if (!route || repathIn <= 0) {
+      route = findPath((x, z) => blocked(x, z, 0.9), { x: p.x, z: p.z }, goal, { reach: 1.8 });
+      repathIn = target.kind === 'npc' ? 2 : 8;
+      if (!route) {
+        zone.run(() => {
+          svc.stopAutopilot('blocked');
+        });
+        return stop;
+      }
+    }
+    while (route.length > 0 && Math.hypot(route[0].x - p.x, route[0].z - p.z) < 1) route.shift();
+    if (route.length === 0) {
+      zone.run(() => {
+        svc.stopAutopilot();
+      });
+      route = null;
+      return stop;
+    }
+    const dx = route[0].x - p.x;
+    const dz = route[0].z - p.z;
+    const len = Math.hypot(dx, dz) || 1;
+    return { x: dx / len, z: dz / len };
+  }
+
   let hourShown = -1;
   let lastStep = 0;
   let lastHour = svc.state().hour;
@@ -239,6 +287,19 @@ export async function createEngine(
         mx += joy.dx;
         mz += joy.dy;
       }
+
+      if (Math.hypot(mx, mz) > 0.1) {
+        // Taking the controls yourself ends autopilot.
+        if (svc.autopilot())
+          zone.run(() => {
+            svc.stopAutopilot();
+          });
+        route = null;
+      } else if (svc.autopilot()) {
+        const d = autoSteer(dt);
+        mx = d.x;
+        mz = d.z;
+      } else route = null;
 
       const l = Math.hypot(mx, mz);
       if (l > 0.1) {

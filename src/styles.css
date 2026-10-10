@@ -809,3 +809,48 @@ button:focus-visible {
 .sw.kente {
   background: repeating-linear-gradient(45deg, #d7263d 0 5px, #f2b705 5px 10px, #1e8a4c 10px 15px);
 }
+
+/* Autopilot */
+.auto-h {
+  font-family: var(--display);
+  font-weight: 400;
+  color: var(--gold);
+  margin: 0 0 6px;
+}
+.auto-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 46vh;
+  overflow-y: auto;
+  margin: 8px 0;
+}
+.auto-list .mbtn.ghost {
+  margin: 0;
+  text-align: left;
+}
+.auto-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 999px;
+  background: var(--night);
+  border: 1px solid var(--line);
+  color: var(--paper);
+  font: 700 14px var(--body);
+}
+.auto-bar button {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--gold);
+  color: var(--night);
+  font: 800 14px var(--body);
+  cursor: pointer;
+}

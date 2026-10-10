@@ -35,6 +35,15 @@ import { SoundService } from '../game/sound.service';
           {{ svc.goalsOpen() ? '‹' : '›' }}
         </button>
         <button class="btn-r" [attr.aria-label]="i18n.t('gameRules')" (click)="svc.rulesOpen.set(true)">?</button>
+        <button
+          class="btn-r"
+          [class.off]="!svc.autopilot()"
+          [attr.aria-label]="i18n.t('autoButton')"
+          [attr.aria-pressed]="svc.autopilot() !== null"
+          (click)="svc.autopilot() ? svc.stopAutopilot() : svc.autopilotMenu.set(true)"
+        >
+          ⇢
+        </button>
         <button class="btn-r" [attr.aria-label]="i18n.t('toggleMap')" (click)="svc.mapOpen.set(!svc.mapOpen())">
           M
         </button>

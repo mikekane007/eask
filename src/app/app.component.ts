@@ -8,6 +8,7 @@ import {
   inject,
   untracked,
 } from '@angular/core';
+import { AutopilotComponent } from './ui/autopilot.component';
 import { AvatarComponent } from './ui/avatar.component';
 import { CityPickerComponent } from './ui/city-picker.component';
 import { type Engine, createEngine } from './game/engine';
@@ -35,6 +36,7 @@ import { SheetComponent } from './ui/sheet.component';
     RulesComponent,
     CityPickerComponent,
     AvatarComponent,
+    AutopilotComponent,
   ],
   template: `
     <div #stage></div>
@@ -52,6 +54,7 @@ import { SheetComponent } from './ui/sheet.component';
     }
     <app-intro />
     <app-avatar />
+    <app-autopilot />
     <app-rules />
     <app-city-picker />
   `,

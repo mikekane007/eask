@@ -111,6 +111,14 @@ const EN = {
   lookOption: 'Option {n}',
   lookKente: 'Kente cloth',
   lookDone: 'Done',
+  // Autopilot
+  autoButton: 'Autopilot',
+  autoTitle: 'Walk by itself',
+  autoHint: 'Choose where to go. Press any key or touch the controls to take over again.',
+  autoWalking: 'Walking there…',
+  autoStop: 'Stop',
+  autoClose: 'Close',
+  autoBlocked: 'There is no way there from here.',
   // Rules
   gotIt: 'Got it',
   closeRules: 'Close rules',
@@ -226,6 +234,13 @@ const FR: Record<UiKey, string> = {
   lookOption: 'Choix {n}',
   lookKente: 'Tissu kente',
   lookDone: 'Terminé',
+  autoButton: 'Pilote automatique',
+  autoTitle: 'Marcher tout seul',
+  autoHint: 'Choisissez où aller. Appuyez sur une touche ou touchez les commandes pour reprendre la main.',
+  autoWalking: 'En route…',
+  autoStop: 'Stop',
+  autoClose: 'Fermer',
+  autoBlocked: 'Il n’y a pas de chemin pour y aller d’ici.',
   gotIt: 'Compris',
   closeRules: 'Fermer les règles',
 };
