@@ -75,4 +75,5 @@ export const PARIS: City = {
     { id: 'site', bi: 3, bj: 3, side: 'N', deco: true, label: t('SITE', 'TRAVAUX'), sign: 'CHANTIER' },
   ],
   people: PARIS_PEOPLE,
+  map: { url: 'maps/paris.json' },
 };

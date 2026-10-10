@@ -72,4 +72,5 @@ export const ACCRA: City = {
     { id: 'site', bi: 3, bj: 1, side: 'S', deco: true, label: t('SITE', 'TRAVAUX'), sign: 'SITE' },
   ],
   people: ACCRA_PEOPLE,
+  map: { url: 'maps/accra.json' },
 };

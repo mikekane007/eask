@@ -75,4 +75,5 @@ export const DOUAI: City = {
     { id: 'site', bi: 1, bj: 1, side: 'S', deco: true, label: t('SITE', 'TRAVAUX'), sign: 'CHANTIER' },
   ],
   people: DOUAI_PEOPLE,
+  map: { url: 'maps/douai.json' },
 };

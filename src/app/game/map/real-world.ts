@@ -128,7 +128,7 @@ export function createRealWorld(
   paving.repeat.set((map.w + margin * 2) / 5, (map.h + margin * 2) / 5);
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(map.w + margin * 2, map.h + margin * 2),
-    new THREE.MeshLambertMaterial({ map: paving, color: lin(0xb8af9a) }),
+    new THREE.MeshLambertMaterial({ map: paving, color: lin(theme.ground === 'laterite' ? 0xb99a74 : 0xb8af9a) }),
   );
   ground.rotation.x = -Math.PI / 2;
   ground.receiveShadow = true;
@@ -353,15 +353,17 @@ export function createRealWorld(
     const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.18, 0.26, 2.4, 6), M(0x5e4632), cap);
     crowns.castShadow = true;
     const o = new THREE.Object3D();
+    const tall = theme.palms; // palms: a tall thin trunk with a flat, wide crown
     const greens = [0x2f6b2a, 0x3a7d32, 0x4f8f3a, 0x285d24].map((c) => new THREE.Color(c).convertSRGBToLinear());
     for (let i = 0; i < cap; i++) {
       const t = treeSpots[i];
-      o.position.set(t.x, 1.2 * t.s, t.z);
-      o.scale.setScalar(t.s);
+      o.position.set(t.x, (tall ? 3.6 : 1.2) * t.s, t.z);
+      o.scale.set(t.s, (tall ? 3 : 1) * t.s, t.s);
       o.updateMatrix();
       trunks.setMatrixAt(i, o.matrix);
-      o.position.set(t.x, 3.3 * t.s, t.z);
-      o.scale.set(t.s * 1.1, t.s * 0.95, t.s * 1.1);
+      o.position.set(t.x, (tall ? 7.6 : 3.3) * t.s, t.z);
+      if (tall) o.scale.set(t.s * 1.7, t.s * 0.45, t.s * 1.7);
+      else o.scale.set(t.s * 1.1, t.s * 0.95, t.s * 1.1);
       o.rotation.y = hash(i) * 6;
       o.updateMatrix();
       crowns.setMatrixAt(i, o.matrix);

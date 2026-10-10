@@ -317,11 +317,25 @@ describe('GameService', () => {
       expect(Math.abs(b.state().x)).toBeLessThan(100);
     });
 
-    it('falls back to the built-in grid for a city without a map', async () => {
-      withMap();
+    it('reports a failed download and leaves the built-in grid in use', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => Promise.resolve({ ok: false, status: 503, json: () => Promise.resolve({}) })),
+      );
       const s = makeService('accra');
-      await s.loadRealMap();
+      await expect(s.loadRealMap()).rejects.toThrow();
       expect(s.realMap()).toBeNull();
+      // the grid still gives a valid place to stand
+      expect(s.state().x !== 0 || s.state().z !== 0).toBe(true);
+    });
+
+    it('rejects a file that is not a city map', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ hello: 'world' }) })),
+      );
+      const s = makeService('paris');
+      await expect(s.loadRealMap()).rejects.toThrow(/expected format/);
     });
   });
 

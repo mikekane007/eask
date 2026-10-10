@@ -105,3 +105,25 @@ describe('city registry', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 });
+
+describe('real maps', () => {
+  it('has a map file for every city that names one, with a place for every person', async () => {
+    const fs = await import('node:fs');
+    for (const city of CITIES) {
+      if (!city.map) continue;
+      const file = `public/${city.map.url}`;
+      expect(fs.existsSync(file), `${city.id} map file`).toBe(true);
+      const map = JSON.parse(fs.readFileSync(file, 'utf8')) as { credit: string; anchors: { people: unknown[] } };
+      expect(map.anchors.people.length, `${city.id} people spots`).toBeGreaterThanOrEqual(city.people.length);
+      expect(map.credit).toContain('OpenStreetMap');
+    }
+  });
+
+  it('keeps every map small enough to download quickly', async () => {
+    const fs = await import('node:fs');
+    for (const city of CITIES) {
+      if (!city.map) continue;
+      expect(fs.statSync(`public/${city.map.url}`).size / 1024, city.id).toBeLessThan(250);
+    }
+  });
+});
