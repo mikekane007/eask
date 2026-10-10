@@ -22,3 +22,11 @@ MSAA, cap pixel ratio at 1.25 and use a 1024 shadow map. Quality may only be rai
 
 Positive: far lower CPU and GPU use; cooler, quieter laptop.
 Negative: slightly softer edges and shadows; 30 fps motion is less smooth.
+
+## Update: quality levels
+
+The fixed budget became three levels (Low, Medium, High) plus Auto (`graphics.ts`, `graphics.service.ts`). Each level sets the
+render resolution, shadows and shadow size, raindrops, share of trees, most vehicles and most background people. The game
+starts on Medium with Auto on. A frame watcher (`FrameMeter`) lowers the level one step, with a notice, when 40% of recent
+frames take over 52 ms (after a 4 s warm-up); it never raises the level on its own. Choosing a level yourself turns Auto off.
+The choice is saved. This protects slow machines such as the owner's 2016 laptop without needing to measure them in advance.

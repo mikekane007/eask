@@ -9,6 +9,7 @@ const TOP = 30;
 export function createWeatherFx(scene: THREE.Scene) {
   /** Current (eased) look. Starts clear. */
   const wx: WeatherLook = { ...WEATHER_LOOK.clear };
+  let drops = DROPS;
 
   const positions = new Float32Array(DROPS * 6);
   const speeds = new Float32Array(DROPS);
@@ -30,6 +31,11 @@ export function createWeatherFx(scene: THREE.Scene) {
   return {
     wx,
     /** Moves the current look toward the target for this weather. */
+    /** How many raindrops to draw (fewer on slower machines). */
+    setDrops(n: number): void {
+      drops = Math.max(0, Math.min(DROPS, Math.floor(n)));
+      geo.setDrawRange(0, drops * 2);
+    },
     ease(target: Weather, dt: number): void {
       const t = WEATHER_LOOK[target];
       const k = 1 - Math.exp(-dt * 0.45);
@@ -45,7 +51,7 @@ export function createWeatherFx(scene: THREE.Scene) {
       if (!on) return;
       mat.opacity = 0.85 * wx.rain * (1 - night * 0.45);
       rain.position.set(Math.round(center.x), 0, Math.round(center.z));
-      for (let i = 0; i < DROPS; i++) {
+      for (let i = 0; i < drops; i++) {
         let y = offsets[i * 3 + 1] - speeds[i] * dt;
         if (y < 0) y += TOP;
         offsets[i * 3 + 1] = y;

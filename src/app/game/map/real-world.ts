@@ -344,6 +344,7 @@ export function createRealWorld(
     }
   }
   const cap = Math.min(treeSpots.length, 420);
+  let treeMeshes: THREE.InstancedMesh[] = [];
   if (cap > 0) {
     const crowns = new THREE.InstancedMesh(
       new THREE.IcosahedronGeometry(1.6, 0),
@@ -372,6 +373,7 @@ export function createRealWorld(
     }
     scene.add(trunks);
     scene.add(crowns);
+    treeMeshes = [trunks, crowns];
   }
 
   // ---- street lamps: a post and a head, dim by day and warm by night
@@ -445,6 +447,10 @@ export function createRealWorld(
     clouds: kit.makeClouds(),
     blocked: (x: number, z: number, r: number) => collision.blocked(x, z, r),
     cut,
+    /** Draws only this share (0 to 1) of the trees, for slower machines. */
+    setTreeShare(share: number): void {
+      for (const m of treeMeshes) m.count = Math.floor(cap * Math.max(0, Math.min(1, share)));
+    },
     /** Lamp heads glow warmly as it gets dark. */
     setNight(n: number) {
       lampMat.color.setRGB(0.35 + 0.65 * n, 0.33 + 0.5 * n, 0.3 + 0.1 * n);

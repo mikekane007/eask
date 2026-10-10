@@ -101,8 +101,13 @@ export function createRoadTraffic(scene: THREE.Scene, kit: Kit, theme: CityTheme
     vh.holding = -1;
   };
 
+  let limit = FLEET;
   return {
     vehicles,
+    /** The most vehicles allowed on the road at once. */
+    setLimit(n: number): void {
+      limit = n;
+    },
     get visibleCount() {
       return vehicles.filter((v) => v.obj.visible).length;
     },
@@ -118,7 +123,7 @@ export function createRoadTraffic(scene: THREE.Scene, kit: Kit, theme: CityTheme
      */
     update(dt: number, hour: number, player: THREE.Vector3 | null, speedFactor: number): void {
       if (!vehicles.length) return;
-      const active = Math.max(2, Math.ceil(trafficDensity(hour) * vehicles.length));
+      const active = Math.max(2, Math.min(limit, Math.ceil(trafficDensity(hour) * vehicles.length)));
       for (const vh of vehicles) {
         const was = vh.obj.visible;
         vh.obj.visible = vh.rank < active;

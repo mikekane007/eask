@@ -3,6 +3,8 @@ import { Component, HostListener, computed, inject } from '@angular/core';
 import { GameService } from '../game/game.service';
 import { I18n } from '../game/i18n/i18n.service';
 import { RULES, type RulesSection } from '../game/i18n/rules';
+import { LEVELS, type GraphicsLevel } from '../game/graphics';
+import { GraphicsService } from '../game/graphics.service';
 import { LangSwitchComponent } from './lang-switch.component';
 import { RichComponent } from './rich.component';
 
@@ -54,6 +56,31 @@ import { RichComponent } from './rich.component';
             <ng-container *ngTemplateOutlet="body; context: { $implicit: s }" />
           }
 
+          <h2>{{ i18n.t('gfxTitle') }}</h2>
+          <div class="lang" role="group" [attr.aria-label]="i18n.t('gfxTitle')">
+            @for (l of levels; track l) {
+              <button
+                type="button"
+                class="lang-btn"
+                [class.on]="!gfx.auto() && gfx.level() === l"
+                [attr.aria-pressed]="!gfx.auto() && gfx.level() === l"
+                (click)="gfx.choose(l)"
+              >
+                {{ levelLabel(l) }}
+              </button>
+            }
+            <button
+              type="button"
+              class="lang-btn"
+              [class.on]="gfx.auto()"
+              [attr.aria-pressed]="gfx.auto()"
+              (click)="gfx.setAuto(!gfx.auto())"
+            >
+              {{ i18n.t('gfxAuto') }}
+            </button>
+          </div>
+          <p class="note">{{ i18n.t('gfxHint') }} ({{ levelLabel(gfx.level()) }})</p>
+
           <button class="mbtn" (click)="close()">{{ i18n.t('gotIt') }}</button>
           @if (svc.city()) {
             <button class="mbtn ghost" (click)="leave()">{{ i18n.t('changeCity') }}</button>
@@ -93,6 +120,10 @@ import { RichComponent } from './rich.component';
 export class RulesComponent {
   readonly svc = inject(GameService);
   readonly i18n = inject(I18n);
+  readonly gfx = inject(GraphicsService);
+  readonly levels = LEVELS;
+  levelLabel = (l: GraphicsLevel): string =>
+    this.i18n.t(l === 'low' ? 'gfxLow' : l === 'medium' ? 'gfxMedium' : 'gfxHigh');
 
   readonly doc = computed(() => RULES[this.i18n.lang()]);
   readonly sections = computed(() => this.fill(this.doc().sections));

@@ -13,6 +13,8 @@ import { buildGraph, networks } from './map/road-graph';
 import { createRoadTraffic } from './map/road-traffic';
 import { createRealWorld } from './map/real-world';
 import { createTraffic } from './traffic';
+import { FrameMeter, GRAPHICS, type GraphicsLevel } from './graphics';
+import type { GraphicsService } from './graphics.service';
 import type { SoundService } from './sound.service';
 import { createWeatherFx } from './weather-fx';
 import type { City } from './types';
@@ -32,6 +34,7 @@ export async function createEngine(
   zone: NgZone,
   city: City,
   sound: SoundService,
+  graphics: GraphicsService,
 ): Promise<Engine> {
   try {
     await Promise.race([document.fonts.load('40px Bungee'), new Promise((r) => setTimeout(r, 1500))]);
@@ -99,6 +102,42 @@ export async function createEngine(
       : null;
   const { player, npcs, S0 } = createCharacters(scene, kit, svc, city);
   const input = createInput(canvas, svc, zone);
+
+  // Detail level: applied when it changes, and lowered automatically if the frame rate cannot be held.
+  const meter = new FrameMeter();
+  let appliedLevel: GraphicsLevel | null = null;
+  const applyGraphics = () => {
+    const level = graphics.level();
+    if (level === appliedLevel) return;
+    const g = GRAPHICS[level];
+    const shadowsChanged = appliedLevel === null || GRAPHICS[appliedLevel].shadows !== g.shadows;
+    appliedLevel = level;
+    renderer.setPixelRatio(Math.min(devicePixelRatio, g.pixelRatio));
+    renderer.setSize(innerWidth, innerHeight, false);
+    renderer.shadowMap.enabled = g.shadows;
+    sun.castShadow = g.shadows;
+    if (sun.shadow.mapSize.x !== g.shadowMap) {
+      sun.shadow.mapSize.set(g.shadowMap, g.shadowMap);
+      // the shadow map is rebuilt at the new size on the next frame
+      const sh = sun.shadow as unknown as { map: { dispose(): void } | null };
+      sh.map?.dispose();
+      sh.map = null;
+    }
+    if (shadowsChanged) {
+      // materials must be rebuilt when shadows are switched on or off
+      scene.traverse((o) => {
+        const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+        for (const mat of Array.isArray(m) ? m : m ? [m] : []) mat.needsUpdate = true;
+      });
+    }
+    fx.setDrops(g.rainDrops);
+    real?.setTreeShare(g.treeShare);
+    traffic?.setLimit(g.vehicles);
+    roadTraffic?.setLimit(g.vehicles);
+    crowd?.setLimit(g.walkers);
+    meter.reset();
+  };
+  applyGraphics();
   const { keys } = input;
 
   svc.teleport = (x, z) => {
@@ -170,6 +209,8 @@ export async function createEngine(
     const realDt = Math.min(1, (now - last) / 1000);
     const dt = Math.min(0.05, realDt);
     last = now;
+    applyGraphics();
+    if (svc.playing() && meter.push(realDt * 1000) === 'slow') zone.run(() => graphics.lowerAutomatically());
     const p = player.position;
     const st = svc.state();
     // Light follows the clock in quarter-hour steps; the render loop eases between them.

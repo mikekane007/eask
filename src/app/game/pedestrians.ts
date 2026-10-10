@@ -119,8 +119,13 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
 
   /** How many people are visible right now (for tests, sound and the map). */
   let visible = 0;
+  let limit = CROWD;
 
   return {
+    /** The most background people allowed out at once. */
+    setLimit(n: number): void {
+      limit = n;
+    },
     get visibleCount() {
       return visible;
     },
@@ -139,7 +144,7 @@ export function createPedestrians(scene: THREE.Scene, kit: Kit, theme: CityTheme
     update(dt: number, hour: number, rain: number): void {
       let count = 0;
       walkers.forEach((p, n) => {
-        const want = isOutAndAbout(SCHEDULES[p.schedule], hour) && staysOut(rain, p.tolerance);
+        const want = n < limit && isOutAndAbout(SCHEDULES[p.schedule], hour) && staysOut(rain, p.tolerance);
         p.vis += ((want ? 1 : 0) - p.vis) * Math.min(1, dt * 1.5);
         if (p.vis < 0.03) {
           if (p.vis !== 0) {

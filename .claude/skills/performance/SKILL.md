@@ -32,3 +32,6 @@ it runs well everywhere.
   (umbrella stripes, wax prints) multiplies memory. Cache by key when adding more.
 - 2026-10-10: A hidden or backgrounded tab still gets `requestAnimationFrame` callbacks in some
   browsers; the loop checks `document.hidden` itself.
+- 2026-10-10: Detail is now data: `GRAPHICS[level]` in `graphics.ts`. Anything that scales with load (trees, vehicles, walkers,
+  raindrops, shadows, resolution) must read its limit from there and expose a `setLimit`/`setDrops`/`setTreeShare`, so Low can really
+  be lighter. New heavy features need an entry in all three levels and a test that Low < Medium <= High. Auto lowers by itself.

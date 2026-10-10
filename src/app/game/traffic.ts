@@ -108,8 +108,13 @@ export function createTraffic(scene: THREE.Scene, kit: Kit, theme: CityTheme) {
   }
   vehicles.forEach(setPose);
 
+  let limit = MAX_VEHICLES;
   return {
     vehicles,
+    /** The most vehicles allowed on the road at once. */
+    setLimit(n: number): void {
+      limit = n;
+    },
     get visibleCount() {
       return vehicles.filter((v) => v.obj.visible).length;
     },
@@ -129,7 +134,7 @@ export function createTraffic(scene: THREE.Scene, kit: Kit, theme: CityTheme) {
      * @param speedFactor 1 in good weather, lower in rain and fog
      */
     update(dt: number, t: number, hour: number, player: THREE.Vector3 | null, speedFactor: number): void {
-      const active = Math.max(2, Math.ceil(trafficDensity(hour) * vehicles.length));
+      const active = Math.max(2, Math.min(limit, Math.ceil(trafficDensity(hour) * vehicles.length)));
       for (const vh of vehicles) vh.obj.visible = vh.rank < active;
 
       for (const vh of vehicles) {

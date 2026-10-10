@@ -33,7 +33,7 @@ Legend: ✅ done · 🔄 in progress · ⏳ planned · ⏸ waiting on owner
 - ⏳ 4.1 Better characters and animations (walk, wave, sit); glTF only if the size budget allows
 - ⏳ 4.2 Shops and homes you can walk into
 - ⏳ 4.3 Landmarks per city (belfry, tower, Braderie stalls)
-- ⏳ 4.4 Quality settings (low, medium, high) with an automatic default from measured frame time
+- ✅ 4.4 Quality settings (low, medium, high) plus Auto, which lowers the detail when the frame rate cannot be held
 
 ## Standing rules
 
