@@ -6,3 +6,4 @@
 | [0002](0002-pin-three-r128.md)          | Pin three.js to r128                               | accepted |
 | [0003](0003-quality-gates.md)           | Quality gate tooling                               | accepted |
 | [0004](0004-light-rendering-budget.md)  | Render budget for modest hardware                  | accepted |
+| [0005](0005-cities-and-languages.md)    | Selectable cities and an English/French switch     | accepted |

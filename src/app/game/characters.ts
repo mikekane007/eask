@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import type { GameService } from './game.service';
 import type { Kit, Tex } from './kit';
 import { B, N, T, bMin, roadC } from './layout';
-import { PEOPLE } from './people.data';
+import type { City } from './types';
 
 /** The player, the ten people on the street and the tro-tros. */
-export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService) {
+export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService, city: City) {
+  const { theme } = city;
   const { M, mesh, box, rnd, TX, canvasTex, waxPrint, signTex, ringMat } = kit;
   interface PersonOpts {
     shirt?: number;
@@ -116,9 +117,8 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService)
     g.textBaseline = 'middle';
     g.fillText('?', 62, 58);
   });
-  const SKINS = [0x5b3a24, 0x4a2f1d, 0x6b4630, 0x3e2716];
-  const npcs = PEOPLE.map((P, n) => {
-    const women = ['abena', 'efua', 'ama', 'esi', 'akos'].includes(P.id);
+  const npcs = city.people.map((P, n) => {
+    const women = P.female === true;
     const c = new THREE.Color(P.shirt).getStyle();
     const print = waxPrint(
       c,
@@ -127,12 +127,13 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService)
       n % 3,
     );
     const g = makePerson({
-      print: women || n % 2 ? print : null,
+      print: theme.waxPrint && (women || n % 2) ? print : null,
       shirt: P.shirt,
-      skin: SKINS[n % 4],
+      skin: P.skin ?? theme.skins[n % theme.skins.length],
+      hair: P.hair,
       pants: [0x1d2a36, 0x3b2a20, 0x2c3e50, 0x4a4a3a][n % 4],
       dress: women,
-      wrap: women && n % 2 ? print : null,
+      wrap: theme.waxPrint && women && n % 2 ? print : null,
     });
     const [axis, k, blk, frac] = P.spot;
     const lane = roadC(k) + (n % 2 ? 2.5 : -2.5);
@@ -165,7 +166,7 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService)
   });
 
   // tro-tros with painted slogans on the back
-  const SLOGANS = ['GOD IS GOOD', 'NO KING AS GOD', 'PSALM 23', 'BY HIS GRACE', 'JESUS NEVER FAILS'];
+  const SLOGANS = theme.vehicles.labels;
   function makeTro(col: number, slogan: string) {
     const g = new THREE.Group();
     box(2.3, 1.1, 5, col, 0, 1.05, 0, g);
@@ -222,9 +223,9 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService)
     return g;
   }
   const tros: THREE.Group[] = [];
-  const troCols = [0xf2b705, 0x2e86c1, 0xe9e9e9, 0xd7263d, 0x1e8a4c];
+  const troCols = theme.vehicles.colors;
   for (let n = 0; n < 5; n++) {
-    const g = makeTro(troCols[n % 5], SLOGANS[n]);
+    const g = makeTro(troCols[n % troCols.length], SLOGANS[n % SLOGANS.length]);
     const horiz = n % 2 === 0,
       k = n < 2 ? 0 : N,
       dir = n % 3 ? 1 : -1;

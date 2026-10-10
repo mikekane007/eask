@@ -1,8 +1,8 @@
 # Go and Tell
 
-An Angular port of the "Go and Tell" three.js street-evangelism game: walk a 3D Accra-style street, talk to ten people, and learn from feedback on each answer.
+An Angular port of the "Go and Tell" three.js street-evangelism game: choose a city (Accra, Lille, Paris or Douai), walk its 3D street, talk to its people and learn from the feedback on each answer. Playable in English and French.
 
-- `src/app/game/` — data (`people.data.ts`, `places.data.ts`), `GameService` (signals state, saves to localStorage) and `engine.ts` (three.js r128 world and render loop, runs outside the Angular zone)
+- `src/app/game/` — rules (`GameService`), the 3D engine and its modules, `cities/` (one file per city: theme, places, people) and `i18n/` (languages)
 - `src/app/ui/` — HUD, goals panel, talk/place sheet, intro modal
 
 ```

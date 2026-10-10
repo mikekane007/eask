@@ -1,29 +1,34 @@
 import { Component, inject } from '@angular/core';
 import { GameService } from '../game/game.service';
+import { I18n } from '../game/i18n/i18n.service';
+import { LangSwitchComponent } from './lang-switch.component';
 
 @Component({
   selector: 'app-intro',
   standalone: true,
+  imports: [LangSwitchComponent],
   template: `
-    @if (!svc.playing()) {
+    @if (svc.city() && !svc.playing()) {
       <div class="modal">
         <div class="modal-in">
-          <h1>GO AND TELL</h1>
-          <p class="verse">Always be ready to give an answer for the hope you have, with gentleness and respect.</p>
-          <p class="keys" style="color:var(--gold);font-weight:800">1 Peter 3:15</p>
-          <p>
-            Step out into the neighbourhood. Ten people are waiting with real questions: a physics student, a grieving
-            widow, a taxi driver chasing a breakthrough. Pick how you respond and learn from the feedback.
-          </p>
-          <p class="keys">
-            Move with WASD or arrow keys, or drag on a phone. Walk up to anyone with a gold ring. Study at the church to
-            grow your Word and reach harder conversations.
-          </p>
-          <button class="mbtn" (click)="svc.start()">{{ svc.hasSave() ? 'Continue' : 'Step out' }}</button>
-          <button class="mbtn ghost" (click)="svc.rulesOpen.set(true)">How to play</button>
-          @if (svc.hasSave()) {
-            <button class="mbtn ghost" (click)="svc.reset()">Start over</button>
+          <div class="picker-top"><app-lang-switch /></div>
+          <h1>{{ i18n.t('title') }}</h1>
+          <p class="verse">{{ i18n.t('verse') }}</p>
+          <p class="keys" style="color:var(--gold);font-weight:800">{{ i18n.t('verseRef') }}</p>
+          <p class="city-line">{{ svc.city()?.name }} · {{ i18n.tr(svc.city()?.country ?? '') }}</p>
+          <p>{{ i18n.t('blurb', { city: svc.city()?.name ?? '', count: svc.people().length }) }}</p>
+          <p class="keys">{{ i18n.t('keysHelp') }}</p>
+          @if (svc.city()?.reviewed === false) {
+            <p class="keys draft">{{ i18n.t('draftNote') }}</p>
           }
+          <button class="mbtn" (click)="svc.start()">
+            {{ svc.hasSave() ? i18n.t('continueGame') : i18n.t('stepOut') }}
+          </button>
+          @if (svc.hasSave()) {
+            <button class="mbtn ghost" (click)="svc.reset()">{{ i18n.t('startOver') }}</button>
+          }
+          <button class="mbtn ghost" (click)="svc.rulesOpen.set(true)">{{ i18n.t('howToPlay') }}</button>
+          <button class="mbtn ghost" (click)="svc.leaveCity()">{{ i18n.t('backToCities') }}</button>
         </div>
       </div>
     }
@@ -31,4 +36,5 @@ import { GameService } from '../game/game.service';
 })
 export class IntroComponent {
   readonly svc = inject(GameService);
+  readonly i18n = inject(I18n);
 }

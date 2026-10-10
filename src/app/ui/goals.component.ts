@@ -1,31 +1,32 @@
 import { Component, inject } from '@angular/core';
 import { GameService } from '../game/game.service';
+import { I18n } from '../game/i18n/i18n.service';
 
 @Component({
   selector: 'app-goals',
   standalone: true,
   template: `
-    @if (svc.goalsOpen()) {
+    @if (svc.goalsOpen() && svc.city()) {
       <div class="goals">
-        <h3>PEOPLE ON YOUR STREET</h3>
+        <h3>{{ i18n.t('peopleOnStreet') }}</h3>
         <ul>
-          @for (P of svc.people; track P.id) {
+          @for (P of svc.people(); track P.id) {
             <li>
               <b>{{ P.name }}</b
               ><span class="tag" [class]="'tag ' + svc.npcStatus(P).cls">{{ svc.npcStatus(P).txt }}</span>
             </li>
           }
         </ul>
-        <h3>YOUR WITNESS</h3>
+        <h3>{{ i18n.t('yourWitness') }}</h3>
         <ul>
           <li>
-            People reached<b>{{ svc.met() }} / {{ svc.people.length }}</b>
+            {{ i18n.t('peopleReached') }}<b>{{ svc.met() }} / {{ svc.people().length }}</b>
           </li>
           <li>
-            Want to follow Jesus<b>{{ svc.won() }}</b>
+            {{ i18n.t('wantFollow') }}<b>{{ svc.won() }}</b>
           </li>
           <li>
-            Wise answers<b>{{ svc.state().good }} of {{ svc.state().total }}</b>
+            {{ i18n.t('wiseAnswers') }}<b>{{ i18n.t('wiseOf', { a: svc.state().good, b: svc.state().total }) }}</b>
           </li>
         </ul>
       </div>
@@ -34,4 +35,5 @@ import { GameService } from '../game/game.service';
 })
 export class GoalsComponent {
   readonly svc = inject(GameService);
+  readonly i18n = inject(I18n);
 }

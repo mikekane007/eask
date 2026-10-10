@@ -55,3 +55,7 @@ button or by editing the saved state) when touching lights or emissive materials
 - 2026-10-10: The engine was split mechanically (code copied by line range into `create*` functions),
   so module bodies still use the original closure style. Verified identical in the browser. New
   world pieces go in the module that owns that concern, and shared helpers go through `kit`.
+- 2026-10-10: The engine is now city-aware. `createEngine(canvas, svc, zone, city)` passes `city.theme` to the
+  builders and `city` to `city.ts` and `characters.ts`. Never read module-level place or people constants;
+  use `city.places` and `city.people`. `AppComponent` creates a fresh `<canvas>` per city and `dispose()` calls
+  `forceContextLoss()` so the GPU memory is freed when you switch cities.

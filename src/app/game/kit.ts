@@ -305,6 +305,26 @@ export function createKit(scene: THREE.Scene) {
     g.fillStyle = gr;
     g.fillRect(0, 0, w, h);
   });
+  TX['grass'] = canvasTex(
+    256,
+    256,
+    (g, w, h) => {
+      g.fillStyle = '#5f8f4a';
+      g.fillRect(0, 0, w, h);
+      speckle(g, w, h, 3000, ['#4d7a3a', '#74a55c', '#3f6a30'], 0.7);
+    },
+    [24, 24],
+  );
+  TX['lawn'] = canvasTex(
+    256,
+    256,
+    (g, w, h) => {
+      g.fillStyle = '#6a9a52';
+      g.fillRect(0, 0, w, h);
+      speckle(g, w, h, 2400, ['#557f40', '#80b066', '#9aa36a'], 0.6);
+    },
+    [5, 5],
+  );
   function stripes(cols: string[], n = 8) {
     return canvasTex(128, 32, (g, w, h) => {
       for (let i = 0; i < n; i++) {

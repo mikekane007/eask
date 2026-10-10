@@ -1,10 +1,21 @@
 import * as THREE from 'three';
 import type { Kit } from './kit';
+import type { CityTheme } from './types';
 
 /** Reusable world pieces: buildings, palms, trees, market umbrellas, poles and wires. */
-export function createBuilders(scene: THREE.Scene, kit: Kit) {
+export function createBuilders(scene: THREE.Scene, kit: Kit, theme: CityTheme) {
   const { lin, M, mesh, box, rnd, TX, stripes } = kit;
   const facadeMats: THREE.MeshLambertMaterial[] = [];
+  /** Roof material for the city: corrugated iron, or plain tile/slate. `fallback` is used for corrugated roofs. */
+  function roofMat(fallback?: number) {
+    if (theme.roof.kind === 'corrugated') {
+      const c = fallback ?? theme.roof.colors[rnd() > 0.5 ? 0 : 1];
+      return new THREE.MeshLambertMaterial({ map: TX['corr'], color: lin(c) });
+    }
+    return new THREE.MeshLambertMaterial({
+      color: lin(theme.roof.colors[Math.floor(rnd() * theme.roof.colors.length)]),
+    });
+  }
   function scaleBoxUV(geo: THREE.BoxGeometry, w: number, h: number, d: number, su: number, sv: number) {
     const uv = geo.attributes['uv'];
     const dims = [
@@ -76,7 +87,7 @@ export function createBuilders(scene: THREE.Scene, kit: Kit) {
     const fm = facadeMat(color, glass);
     const roofM = M(0xa7a49c);
     const b = mesh(geo, [fm, fm, roofM, roofM, fm, fm], x, base + h / 2, z);
-    box(w + 0.12, 0.55, d + 0.12, 0x7d4a32, x, base + 0.27, z); // red-dust plinth
+    box(w + 0.12, 0.55, d + 0.12, theme.ground === 'laterite' ? 0x7d4a32 : 0x8b877e, x, base + 0.27, z); // plinth
     const isFlat = flat ?? floors > 1;
     const top = base + h;
     if (isFlat) {
@@ -85,15 +96,14 @@ export function createBuilders(scene: THREE.Scene, kit: Kit) {
       box(w + 0.2, 0.5, 0.2, pm, x, top + 0.25, z + d / 2);
       box(0.2, 0.5, d, pm, x - w / 2, top + 0.25, z);
       box(0.2, 0.5, d, pm, x + w / 2, top + 0.25, z);
-      if (rnd() > 0.35) polytank(x + w / 4, top, z - d / 5);
-      if (rnd() > 0.6) {
+      if (theme.rooftopClutter && rnd() > 0.35) polytank(x + w / 4, top, z - d / 5);
+      if (theme.rooftopClutter && rnd() > 0.6) {
         const dish = mesh(new THREE.CylinderGeometry(0.55, 0.1, 0.2, 14), M(0xeeeeee), x - w / 4, top + 0.9, z + d / 5);
         dish.rotation.x = -0.9;
         box(0.08, 0.8, 0.08, 0x777777, x - w / 4, top + 0.4, z + d / 5);
       }
     } else {
-      const rm = new THREE.MeshLambertMaterial({ map: TX['corr'], color: lin(rnd() > 0.5 ? 0xd0d0d0 : 0xb08070) });
-      gable(w, d, 1.5, rm, x, top, z, w < d);
+      gable(w, d, theme.roof.pitch, roofMat(), x, top, z, w < d);
     }
     if (door)
       box(
@@ -200,8 +210,8 @@ export function createBuilders(scene: THREE.Scene, kit: Kit) {
   }
   const lampGlows: (THREE.Sprite | THREE.Mesh)[] = [];
   function pole(x: number, z: number, lamp: boolean) {
-    mesh(new THREE.CylinderGeometry(0.1, 0.13, 7.4, 6), M(0x6b4f35), x, 3.7, z);
-    box(1.4, 0.08, 0.08, 0x6b4f35, x, 6.8, z);
+    mesh(new THREE.CylinderGeometry(0.1, 0.13, 7.4, 6), M(theme.wires ? 0x6b4f35 : 0x33403b), x, 3.7, z);
+    box(1.4, 0.08, 0.08, theme.wires ? 0x6b4f35 : 0x33403b, x, 6.8, z);
     if (lamp) {
       box(0.9, 0.08, 0.08, 0x444444, x + 0.5, 6.2, z + 0.3);
       mesh(
@@ -252,7 +262,7 @@ export function createBuilders(scene: THREE.Scene, kit: Kit) {
       new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x151515 })),
     );
   }
-  return { facadeMats, lampGlows, gable, polytank, building, palm, shadeTree, umbrella, pole, wire };
+  return { facadeMats, lampGlows, gable, polytank, building, palm, shadeTree, umbrella, pole, wire, roofMat };
 }
 
 export type Builders = ReturnType<typeof createBuilders>;

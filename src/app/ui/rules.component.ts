@@ -1,124 +1,123 @@
-import { Component, HostListener, inject } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, HostListener, computed, inject } from '@angular/core';
 import { GameService } from '../game/game.service';
+import { I18n } from '../game/i18n/i18n.service';
+import { RULES, type RulesSection } from '../game/i18n/rules';
+import { LangSwitchComponent } from './lang-switch.component';
+import { RichComponent } from './rich.component';
 
-/** The full rulebook, always one tap away. People and Word needs come from the game data so they never go stale. */
+/** The full rulebook, always one tap away. People and Word needs come from the city data so they never go stale. */
 @Component({
   selector: 'app-rules',
   standalone: true,
+  imports: [LangSwitchComponent, NgTemplateOutlet, RichComponent],
   template: `
     @if (svc.rulesOpen()) {
       <div class="modal rules-modal">
-        <button class="backdrop" tabindex="-1" aria-label="Close rules" (click)="close()"></button>
+        <button class="backdrop" tabindex="-1" [attr.aria-label]="i18n.t('closeRules')" (click)="close()"></button>
         <div class="modal-in rules" role="dialog" aria-modal="true" aria-labelledby="rules-title" tabindex="-1">
-          <h1 id="rules-title">HOW TO PLAY</h1>
+          <div class="picker-top"><app-lang-switch /></div>
+          <h1 id="rules-title">{{ doc().title }}</h1>
 
-          <h2>Goal</h2>
-          <p>
-            Talk with all {{ svc.people.length }} people on the street and help each one reach
-            <b>"Wants to follow Jesus"</b>. Manage your energy, your Word and the clock while you do it.
-          </p>
+          @for (s of sections(); track s.h) {
+            <h2>{{ s.h }}</h2>
+            <ng-container *ngTemplateOutlet="body; context: { $implicit: s }" />
+          }
 
-          <h2>Controls</h2>
-          <ul>
-            <li>Move: <b>W A S D</b> or the <b>arrow keys</b>. On a phone, drag anywhere on the street.</li>
-            <li>Walk into a <b>gold ring</b> to open a place or start a conversation.</li>
-            <li><b>M</b> button: show or hide the map. <b>+ / −</b>: zoom. <b>›</b>: people and progress.</li>
-          </ul>
-
-          <h2>Your stats</h2>
-          <ul>
-            <li><b>Energy</b> (starts at 80, max 100): talking costs 8 energy.</li>
-            <li>
-              <b>Word</b> (starts at 10, max 100): your Bible knowledge. It unlocks harder conversations. A wise answer
-              gives +2.
-            </li>
-            <li><b>Time</b>: every hour that passes costs 1.5 energy and 0.2 Word.</li>
-            <li><b>Wise answers</b>: the share of your answers that were the best choice.</li>
-            <li>If energy reaches 0 you collapse and wake at home 10 hours later with 45 energy.</li>
-          </ul>
-
-          <h2>Places</h2>
-          <ul>
-            <li>
-              <b>Grace Chapel</b> (06:00–21:00): Bible study (+12 Word, 2h, −5 energy). Evangelism training (needs Word
-              20; +20 Word, 3h, −8 energy). Prayer meeting (+10 energy, 1h).
-            </li>
-            <li><b>Chop Bar</b> (06:00–23:00): Waakye +25 energy, Fufu &amp; light soup +40 energy, 1 hour each.</li>
-            <li>
-              <b>Home</b>: sleep to refill energy and start again at 07:00. Sleeping after 07:00 moves to the next day.
-            </li>
-            <li>Market, Tech Hub and Site are scenery.</li>
-          </ul>
-
-          <h2>Conversations</h2>
-          <ul>
-            <li>You can talk between <b>07:00 and 21:00</b> with at least <b>15 energy</b>. It costs 1 hour.</li>
-            <li>Each person asks 3 questions. Pick one of 3 answers: wise, partly there, or missed it.</li>
-            <li>
-              <b>Openness</b> starts at 50. Wise <b>+18</b>, partly there <b>+3</b>, missed it <b>−25</b>. At 0 the
-              person walks away.
-            </li>
-            <li>
-              Result: <b>80+</b> wants to follow Jesus · <b>45–79</b> seed sown · <b>below 45</b> walked away. You can
-              try again; a better result replaces a worse one, never the other way round.
-            </li>
-            <li>After every answer you see why it was right or wrong, with a Bible reference.</li>
-          </ul>
-
-          <h2>People and the Word they need</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Person</th>
-                <th>Who</th>
-                <th>Word</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (P of svc.people; track P.id) {
+          @if (svc.city()) {
+            <h2>{{ doc().peopleHeading }}</h2>
+            <table>
+              <thead>
                 <tr>
-                  <td>{{ P.name }}</td>
-                  <td>{{ P.role }}</td>
-                  <td>{{ P.req }}</td>
+                  <th>{{ doc().colPerson }}</th>
+                  <th>{{ doc().colWho }}</th>
+                  <th>{{ doc().colWord }}</th>
                 </tr>
-              }
-            </tbody>
-          </table>
-          <p class="note">
-            On the map a <span style="color:var(--gold)">gold dot</span> is someone you can talk to now, a
-            <span style="color:var(--green)">green dot</span> is someone you've reached, and a grey dot needs more Word.
-          </p>
+              </thead>
+              <tbody>
+                @for (P of svc.people(); track P.id) {
+                  <tr>
+                    <td>{{ P.name }}</td>
+                    <td>{{ i18n.tr(P.role) }}</td>
+                    <td>{{ P.req }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <p class="note">
+              <app-rich [text]="doc().mapNote" />
+            </p>
+          }
 
-          <h2>Tips for wise answers</h2>
-          <ul>
-            <li>Listen first. Ask a gentle question before giving an answer.</li>
-            <li>Respect their mind, their grief and their family. Never insult or threaten.</li>
-            <li>Point to Jesus Himself, to grace and to the resurrection, not to rules, money or a person.</li>
-            <li>Be honest: Jesus offers forgiveness and Himself, not an easy life.</li>
-          </ul>
+          @for (s of after(); track s.h) {
+            <h2>{{ s.h }}</h2>
+            <ng-container *ngTemplateOutlet="body; context: { $implicit: s }" />
+          }
 
-          <h2>A good first day</h2>
-          <ol>
-            <li>Talk to the first three people (they need no Word).</li>
-            <li>Eat if your energy is low, then do Bible study at the chapel.</li>
-            <li>Do evangelism training once your Word reaches 20.</li>
-            <li>Sleep at home, then talk to the people you've unlocked.</li>
-          </ol>
-
-          <h2>Saving</h2>
-          <p>Your progress saves automatically in this browser. Use <b>Start over</b> on the first screen to reset.</p>
-
-          <button class="mbtn" (click)="close()">Got it</button>
+          <button class="mbtn" (click)="close()">{{ i18n.t('gotIt') }}</button>
+          @if (svc.city()) {
+            <button class="mbtn ghost" (click)="leave()">{{ i18n.t('changeCity') }}</button>
+          }
         </div>
       </div>
     }
+
+    <ng-template #body let-s>
+      @if (s.p) {
+        <p>
+          <app-rich [text]="s.p" />
+        </p>
+      }
+      @if (s.items) {
+        @if (s.ordered) {
+          <ol>
+            @for (it of s.items; track $index) {
+              <li>
+                <app-rich [text]="it" />
+              </li>
+            }
+          </ol>
+        } @else {
+          <ul>
+            @for (it of s.items; track $index) {
+              <li>
+                <app-rich [text]="it" />
+              </li>
+            }
+          </ul>
+        }
+      }
+    </ng-template>
   `,
 })
 export class RulesComponent {
   readonly svc = inject(GameService);
+  readonly i18n = inject(I18n);
+
+  readonly doc = computed(() => RULES[this.i18n.lang()]);
+  readonly sections = computed(() => this.fill(this.doc().sections));
+  readonly after = computed(() => this.fill(this.doc().after));
+
+  /** Fills {church}, {eat} and {home} with the current city's own place names. */
+  private fill(sections: RulesSection[]): RulesSection[] {
+    const name = (id: string) => {
+      const n = this.svc.places().find((p) => p.id === id)?.name;
+      return n ? this.i18n.tr(n) : '';
+    };
+    const params = { church: name('church'), eat: name('chop'), home: name('home') };
+    return sections.map((s) => ({
+      ...s,
+      p: s.p ? this.i18n.fill(s.p, params) : undefined,
+      items: s.items?.map((it) => this.i18n.fill(it, params)),
+    }));
+  }
 
   close(): void {
     this.svc.rulesOpen.set(false);
+  }
+
+  leave(): void {
+    this.svc.leaveCity();
   }
 
   @HostListener('document:keydown.escape')

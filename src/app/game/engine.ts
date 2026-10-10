@@ -6,9 +6,9 @@ import { createCity } from './city';
 import { type GameService, type Near } from './game.service';
 import { createInput } from './input';
 import { createKit } from './kit';
-import { H, T, roadC } from './layout';
+import { H, T, markerPos, roadC } from './layout';
 import { createLighting } from './lighting';
-import { PLACES, markerPos } from './places.data';
+import type { City } from './types';
 export interface Engine {
   start(): void;
   dispose(): void;
@@ -19,7 +19,12 @@ export interface Engine {
  * Builds the whole 3D street (city blocks, landmarks, people, tro-tros, day/night light)
  * and runs the render loop. Everything UI-facing goes through GameService.
  */
-export async function createEngine(canvas: HTMLCanvasElement, svc: GameService, zone: NgZone): Promise<Engine> {
+export async function createEngine(
+  canvas: HTMLCanvasElement,
+  svc: GameService,
+  zone: NgZone,
+  city: City,
+): Promise<Engine> {
   try {
     await Promise.race([document.fonts.load('40px Bungee'), new Promise((r) => setTimeout(r, 1500))]);
   } catch {
@@ -60,11 +65,11 @@ export async function createEngine(canvas: HTMLCanvasElement, svc: GameService, 
   const kit = createKit(scene);
   const lighting = createLighting(scene);
   const { skyU, sky, LT, CUR, setTimeTarget, snapLight } = lighting;
-  const builders = createBuilders(scene, kit);
-  const city = createCity(scene, kit, builders);
-  const { solids, markers, beams, smoke, clouds } = city;
+  const builders = createBuilders(scene, kit, city.theme);
+  const world = createCity(scene, kit, builders, city);
+  const { solids, markers, beams, smoke, clouds } = world;
   const { facadeMats, lampGlows } = builders;
-  const { player, npcs, tros, S0 } = createCharacters(scene, kit, svc);
+  const { player, npcs, tros, S0 } = createCharacters(scene, kit, svc, city);
   const input = createInput(canvas, svc, zone);
   const { keys } = input;
 
@@ -161,7 +166,7 @@ export async function createEngine(canvas: HTMLCanvasElement, svc: GameService, 
         }
       }
       let nextNear: Near | null = null;
-      for (const L of PLACES) {
+      for (const L of city.places) {
         if (!L.deco) {
           const m = markerPos(L);
           if (Math.hypot(p.x - m.x, p.z - m.z) < 2.6) {
@@ -336,6 +341,7 @@ export async function createEngine(canvas: HTMLCanvasElement, svc: GameService, 
         t.dispose();
       });
       renderer.dispose();
+      renderer.forceContextLoss();
     },
   };
 }

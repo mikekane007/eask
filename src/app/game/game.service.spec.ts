@@ -1,7 +1,20 @@
+import { Injector, runInInjectionContext } from '@angular/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ACCRA } from './cities/accra';
 import { GameService } from './game.service';
-import { PEOPLE, type Quality } from './people.data';
-import { PLACES } from './places.data';
+import { I18n } from './i18n/i18n.service';
+import type { Quality } from './types';
+
+const PEOPLE = ACCRA.people;
+const PLACES = ACCRA.places;
+
+/** A service with the test language fixed to English and Accra selected. */
+function makeService(cityId = 'accra'): GameService {
+  const injector = Injector.create({ providers: [{ provide: I18n, useClass: I18n }] });
+  const svc = runInInjectionContext(injector, () => new GameService());
+  svc.selectCity(cityId);
+  return svc;
+}
 
 const person = (id: string) => {
   const p = PEOPLE.find((x) => x.id === id);
@@ -37,7 +50,7 @@ describe('GameService', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    svc = new GameService();
+    svc = makeService();
   });
 
   describe('new game', () => {
@@ -194,19 +207,19 @@ describe('GameService', () => {
     it('restores progress in a new session', () => {
       svc.startTalk(person('kwame'));
       playThrough(svc, 'good');
-      const reloaded = new GameService();
+      const reloaded = makeService();
       expect(reloaded.state().best['kwame']).toBe('open');
       expect(reloaded.state().word).toBe(svc.state().word);
     });
 
     it('ignores corrupt saved data and starts fresh', () => {
-      localStorage.setItem('goandtell', '{not json');
-      expect(new GameService().state().day).toBe(1);
+      localStorage.setItem('goandtell:accra', '{not json');
+      expect(makeService().state().day).toBe(1);
     });
 
     it('fills in fields missing from an older save', () => {
-      localStorage.setItem('goandtell', JSON.stringify({ word: 30, body: 60 }));
-      const s = new GameService().state();
+      localStorage.setItem('goandtell:accra', JSON.stringify({ word: 30, body: 60 }));
+      const s = makeService().state();
       expect([s.word, s.body, s.day, s.hour]).toEqual([30, 60, 1, 7]);
     });
 

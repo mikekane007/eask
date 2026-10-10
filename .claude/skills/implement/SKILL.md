@@ -63,3 +63,13 @@ changed flow, read console messages. Say what you could not check (for example r
   `Record<Quality, string>` or strict templates reject the index.
 - 2026-10-10: Signals set from outside the zone (rAF, raw DOM listeners) may not trigger change
   detection reliably; wrap those writes in `zone.run`.
+- 2026-10-10: Every player-visible string goes through `I18n` (`t()` for UI keys, `tr()` for content). Add the
+  key to **both** languages in `i18n/ui.ts`; a unit test fails if one is missing or the placeholders differ.
+  Do not return pre-translated strings from long-lived state; store a key or enum and translate at render time
+  (see `Talk.ending`).
+- 2026-10-10: Vitest needs `import '@angular/compiler'` (in `src/test-setup.ts`) to construct `@Injectable`
+  classes. Build services with `runInInjectionContext(Injector.create(...), () => new GameService())`.
+- 2026-10-10: In Angular templates, text next to bold markup picks up stray spaces from line breaks. Use
+  `<app-rich [text]="...">` for `**bold**` text.
+- 2026-10-10: Editing a file the dev server watches reloads the open page and resets in-memory state; when
+  checking the UI in a browser, make all edits first, then reload and test.

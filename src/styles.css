@@ -588,3 +588,116 @@ button:focus-visible {
 .modal-in.rules {
   position: relative;
 }
+.picker-top {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+.lang {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.lang-btn {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font: 800 12px var(--body);
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.lang-btn.on {
+  background: var(--gold);
+  color: var(--night);
+}
+.btn-r.small {
+  font-size: 13px;
+}
+.picker-in {
+  width: min(640px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+}
+.picker-sub-title {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--paper);
+  margin: 10px 0 0;
+  letter-spacing: 0.04em;
+}
+.cities {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+  text-align: left;
+}
+.city {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(244, 238, 220, 0.06);
+  color: var(--paper);
+  font: 600 14px var(--body);
+  cursor: pointer;
+  text-align: left;
+}
+.city:hover,
+.city:focus-visible {
+  background: rgba(242, 183, 5, 0.14);
+  border-color: var(--gold);
+}
+.city-country {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 800;
+}
+.city-name {
+  font-family: var(--display);
+  font-size: 22px;
+  color: var(--gold);
+}
+.city-tag {
+  color: var(--paper);
+  line-height: 1.4;
+  font-weight: 400;
+}
+.city-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 800;
+}
+.city-prog {
+  color: var(--green);
+}
+.city-draft {
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  border-radius: 999px;
+  padding: 0 7px;
+}
+.city-line {
+  color: var(--gold) !important;
+  font-weight: 800;
+}
+.keys.draft {
+  color: var(--amber);
+}
+#c {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}

@@ -1,6 +1,18 @@
-import { Component, type ElementRef, NgZone, type OnDestroy, type OnInit, ViewChild, inject } from '@angular/core';
+import {
+  Component,
+  type ElementRef,
+  NgZone,
+  type OnDestroy,
+  ViewChild,
+  effect,
+  inject,
+  untracked,
+} from '@angular/core';
+import { CityPickerComponent } from './ui/city-picker.component';
 import { type Engine, createEngine } from './game/engine';
 import { GameService } from './game/game.service';
+import { I18n } from './game/i18n/i18n.service';
+import type { City } from './game/types';
 import { GoalsComponent } from './ui/goals.component';
 import { HudComponent } from './ui/hud.component';
 import { IntroComponent } from './ui/intro.component';
@@ -11,9 +23,17 @@ import { SheetComponent } from './ui/sheet.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [HudComponent, GoalsComponent, SheetComponent, IntroComponent, MinimapComponent, RulesComponent],
+  imports: [
+    HudComponent,
+    GoalsComponent,
+    SheetComponent,
+    IntroComponent,
+    MinimapComponent,
+    RulesComponent,
+    CityPickerComponent,
+  ],
   template: `
-    <canvas #c id="c"></canvas>
+    <div #stage></div>
     <app-hud />
     <app-goals />
     <app-minimap />
@@ -28,19 +48,50 @@ import { SheetComponent } from './ui/sheet.component';
     }
     <app-intro />
     <app-rules />
+    <app-city-picker />
   `,
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnDestroy {
   readonly svc = inject(GameService);
-  private zone = inject(NgZone);
-  @ViewChild('c', { static: true }) canvas!: ElementRef<HTMLCanvasElement>;
+  private readonly i18n = inject(I18n);
+  private readonly zone = inject(NgZone);
+  @ViewChild('stage', { static: true }) stage!: ElementRef<HTMLElement>;
   private engine?: Engine;
+  private canvas?: HTMLCanvasElement;
+  /** Bumped on every city change so a slow engine start can tell it has been superseded. */
+  private generation = 0;
   private destroyed = false;
 
-  ngOnInit(): void {
+  constructor() {
+    effect(() => {
+      const city = this.svc.city();
+      untracked(() => {
+        this.mount(city);
+      });
+    });
+    // Keep the document language in step with the game.
+    effect(() => {
+      document.documentElement.lang = this.i18n.lang();
+    });
+  }
+
+  /** Tears down the current 3D world and, if a city is chosen, builds that city's world on a fresh canvas. */
+  private mount(city: City | null): void {
+    const gen = ++this.generation;
+    this.engine?.dispose();
+    this.engine = undefined;
+    this.canvas?.remove();
+    this.canvas = undefined;
+    if (!city) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.id = 'c';
+    this.stage.nativeElement.appendChild(canvas);
+    this.canvas = canvas;
+
     void this.zone.runOutsideAngular(async () => {
-      const engine = await createEngine(this.canvas.nativeElement, this.svc, this.zone);
-      if (this.destroyed) {
+      const engine = await createEngine(canvas, this.svc, this.zone, city);
+      if (this.destroyed || gen !== this.generation) {
         engine.dispose();
         return;
       }

@@ -1,8 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
 import { GameService, type Talk } from '../game/game.service';
-import { OUTCOMES, VERDICT } from '../game/state';
-import { type Place } from '../game/places.data';
-import { type Person, type Quality } from '../game/people.data';
+import { I18n } from '../game/i18n/i18n.service';
+import { OUTCOMES, VERDICT_KEY } from '../game/state';
+import type { Person, Place, PlaceOption, Quality } from '../game/types';
 
 @Component({
   selector: 'app-sheet',
@@ -17,20 +17,20 @@ import { type Person, type Quality } from '../game/people.data';
                 <div class="who">
                   <div>
                     <h2>{{ t.P.name }}</h2>
-                    <div class="round">{{ t.P.role }} · Question {{ t.round + 1 }} of {{ t.P.rounds.length }}</div>
+                    <div class="round">{{ i18n.tr(t.P.role) }} · {{ roundText(t) }}</div>
                   </div>
                   <div class="open">
-                    <div class="lbl">Openness</div>
+                    <div class="lbl">{{ i18n.t('openness') }}</div>
                     <div class="bar" style="height:6px">
                       <i [style.width.%]="t.open" [style.background]="openColor(t.open)"></i>
                     </div>
                   </div>
                 </div>
-                <div class="bubble">{{ t.P.rounds[t.round].q }}</div>
+                <div class="bubble">{{ i18n.tr(t.P.rounds[t.round].q) }}</div>
                 <div class="opts">
-                  @for (a of t.choices; track a[0]; let i = $index) {
+                  @for (a of t.choices; track $index; let i = $index) {
                     <button class="opt" [id]="'ans-' + t.round + '-' + i" (click)="svc.answer(a)">
-                      <span>{{ a[0] }}</span>
+                      <span>{{ i18n.tr(a[0]) }}</span>
                     </button>
                   }
                 </div>
@@ -39,56 +39,55 @@ import { type Person, type Quality } from '../game/people.data';
                 <div class="who">
                   <div>
                     <h2>{{ t.P.name }}</h2>
-                    <div class="round">{{ t.P.role }} · Question {{ t.round + 1 }} of {{ t.P.rounds.length }}</div>
+                    <div class="round">{{ i18n.tr(t.P.role) }} · {{ roundText(t) }}</div>
                   </div>
                   <div class="open">
-                    <div class="lbl">Openness</div>
+                    <div class="lbl">{{ i18n.t('openness') }}</div>
                     <div class="bar" style="height:6px">
                       <i [style.width.%]="t.open" [style.background]="openColor(t.open)"></i>
                     </div>
                   </div>
                 </div>
-                <div class="bubble">{{ t.P.rounds[t.round].q }}</div>
-                <div class="mine">You said: “{{ t.picked![0] }}”</div>
-                <div [class]="'fb ' + t.picked![1]">
-                  <span class="verdict">{{ verdict[t.picked![1]] }}</span
-                  >{{ t.picked![2] }}<span class="ref">{{ t.picked![3] }}</span>
-                </div>
-                @if (t.picked![1] !== 'good') {
-                  <div class="fb good">
-                    <span class="verdict">A wiser reply</span>{{ best(t)[0] }}<span class="ref">{{ best(t)[3] }}</span>
+                <div class="bubble">{{ i18n.tr(t.P.rounds[t.round].q) }}</div>
+                @if (t.picked; as p) {
+                  <div class="mine">{{ i18n.t('youSaid', { text: i18n.tr(p[0]) }) }}</div>
+                  <div [class]="'fb ' + p[1]">
+                    <span class="verdict">{{ i18n.t(verdictKey[p[1]]) }}</span
+                    >{{ i18n.tr(p[2]) }}<span class="ref">{{ i18n.ref(p[3]) }}</span>
                   </div>
+                  @if (p[1] !== 'good') {
+                    <div class="fb good">
+                      <span class="verdict">{{ i18n.t('wiserReply') }}</span
+                      >{{ i18n.tr(best(t)[0]) }}<span class="ref">{{ i18n.ref(best(t)[3]) }}</span>
+                    </div>
+                  }
                 }
                 <button class="go" (click)="svc.next()">
-                  {{ svc.isLastRound(t) ? 'See how it went' : 'Continue' }}
+                  {{ svc.isLastRound(t) ? i18n.t('seeResult') : i18n.t('continue') }}
                 </button>
               }
               @case ('result') {
-                <h2 [class]="outcomes[t.outcome!].cls" style="color:inherit">{{ outcomes[t.outcome!].label }}</h2>
-                <p style="line-height:1.5;margin:6px 0 4px">{{ t.message }}</p>
+                @if (t.outcome; as o) {
+                  <h2 [class]="outcomes[o].cls" style="color:inherit">{{ i18n.t(outcomes[o].key) }}</h2>
+                }
+                <p style="line-height:1.5;margin:6px 0 4px">{{ svc.endMessage(t) }}</p>
                 <ul class="review">
                   @for (q of t.log; track $index) {
                     <li>
                       <span [class]="'t-' + q" style="font-weight:800;width:14px">{{ icon[q] }}</span
-                      >Question {{ $index + 1 }}: {{ verdict[q] }}
+                      >{{ i18n.t('questionNumber', { n: $index + 1, verdict: i18n.t(verdictKey[q]) }) }}
                     </li>
                   }
                 </ul>
-                <button class="go" (click)="svc.done()">Back to the street</button>
+                <button class="go" (click)="svc.done()">{{ i18n.t('backToStreet') }}</button>
               }
             }
           } @else {
             @if (place(); as L) {
-              <h2>{{ L.name }}</h2>
-              <div class="sub">
-                {{
-                  L.open![1] - L.open![0] >= 24
-                    ? 'Open all day'
-                    : 'Open ' + pad(L.open![0]) + ':00–' + pad(L.open![1]) + ':00'
-                }}
-              </div>
+              <h2>{{ L.name ? i18n.tr(L.name) : '' }}</h2>
+              <div class="sub">{{ svc.hoursText(L) }}</div>
               <div class="opts">
-                @for (o of L.opts; track o.label; let i = $index) {
+                @for (o of L.opts ?? []; track $index; let i = $index) {
                   <button
                     class="opt"
                     [id]="'p-' + L.id + '-' + i"
@@ -96,7 +95,7 @@ import { type Person, type Quality } from '../game/people.data';
                     (click)="svc.usePlaceOption(o)"
                   >
                     <span
-                      >{{ o.label }}
+                      >{{ i18n.tr(o.label) }}
                       @if (svc.placeClosedReason(o, L); as why) {
                         <span class="why">{{ why }}</span>
                       }
@@ -111,9 +110,9 @@ import { type Person, type Quality } from '../game/people.data';
                 <div>
                   <h2>{{ P.name }}</h2>
                   <div class="sub">
-                    {{ P.role }}
+                    {{ i18n.tr(P.role) }}
                     @if (svc.state().best[P.id]) {
-                      · last time: <span [class]="svc.npcStatus(P).cls">{{ svc.npcStatus(P).txt }}</span>
+                      · {{ i18n.t('lastTime') }} <span [class]="svc.npcStatus(P).cls">{{ svc.npcStatus(P).txt }}</span>
                     }
                   </div>
                 </div>
@@ -126,12 +125,12 @@ import { type Person, type Quality } from '../game/people.data';
                   (click)="svc.startTalk(P)"
                 >
                   <span
-                    >{{ svc.state().best[P.id] ? 'Talk again' : 'Start a conversation' }}
+                    >{{ svc.state().best[P.id] ? i18n.t('talkAgain') : i18n.t('startConversation') }}
                     @if (svc.approachBlock(P); as why) {
                       <span class="why">{{ why }}</span>
                     }
                   </span>
-                  <span class="fx">1h · −8 energy</span>
+                  <span class="fx">{{ i18n.t('talkCost') }}</span>
                 </button>
               </div>
             }
@@ -143,7 +142,8 @@ import { type Person, type Quality } from '../game/people.data';
 })
 export class SheetComponent {
   readonly svc = inject(GameService);
-  readonly verdict: Record<Quality, string> = VERDICT;
+  readonly i18n = inject(I18n);
+  readonly verdictKey = VERDICT_KEY;
   readonly outcomes = OUTCOMES;
   readonly icon: Record<Quality, string> = { good: '✓', ok: '~', bad: '✗' };
   readonly place = computed<Place | null>(() => {
@@ -154,15 +154,15 @@ export class SheetComponent {
     const c = this.svc.current();
     return c?.kind === 'npc' ? c.ref : null;
   });
-  pad = (n: number) => String(n).padStart(2, '0');
   openColor = (o: number) => (o >= 70 ? 'var(--green)' : o >= 40 ? 'var(--amber)' : 'var(--red)');
+  roundText = (t: Talk) => this.i18n.t('questionOf', { n: t.round + 1, total: t.P.rounds.length });
   best = (t: Talk) => t.P.rounds[t.round].a.find((x) => x[1] === 'good') ?? t.P.rounds[t.round].a[0];
-  effects(o: { word?: number; body?: number; sleep?: boolean; h?: number }): string {
+  effects(o: PlaceOption): string {
     const fx: string[] = [];
-    if (o.word) fx.push('+' + o.word + ' word');
-    if (o.body) fx.push((o.body > 0 ? '+' : '') + o.body + ' energy');
-    if (o.sleep) fx.push('energy full');
-    if (o.h) fx.push(o.h + 'h');
+    if (o.word) fx.push(this.i18n.t('fxWord', { n: o.word }));
+    if (o.body) fx.push(this.i18n.t('fxEnergy', { n: (o.body > 0 ? '+' : '') + o.body }));
+    if (o.sleep) fx.push(this.i18n.t('fxFull'));
+    if (o.h) fx.push(this.i18n.t('fxHours', { n: o.h }));
     return fx.join(' · ');
   }
 }

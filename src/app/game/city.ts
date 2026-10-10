@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 import type { Builders } from './builders';
 import type { Kit } from './kit';
-import { B, H, N, OFF, T, bC, bMin, roadC } from './layout';
-import { PLACES, markerPos } from './places.data';
+import { B, H, N, OFF, T, bC, bMin, markerPos, roadC } from './layout';
+import type { City } from './types';
 
 /** Ground, city blocks, landmark buildings and clouds. Returns what the render loop animates. */
-export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
+export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders, city: City) {
+  const { theme, places } = city;
   const { lin, M, mesh, box, rnd, TX, sign, ringMat } = kit;
-  const { building, gable, palm, shadeTree, umbrella, pole, wire } = builders;
+  const { building, gable, palm, shadeTree, umbrella, pole, wire, roofMat } = builders;
   /* ---------- ground ---------- */
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(T + 16, T + 16),
@@ -19,13 +20,13 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
   TX['asphalt'].repeat.set((T + 16) / 8, (T + 16) / 8);
   const outer = new THREE.Mesh(
     new THREE.PlaneGeometry(T + 400, T + 400),
-    new THREE.MeshLambertMaterial({ map: TX['laterite'] }),
+    new THREE.MeshLambertMaterial({ map: TX[theme.ground] }),
   );
   outer.rotation.x = -Math.PI / 2;
   outer.position.y = -0.02;
   outer.receiveShadow = true;
   scene.add(outer);
-  TX['laterite'].repeat.set(60, 60);
+  TX[theme.ground].repeat.set(60, 60);
   {
     // lane dashes (instanced)
     const geo = new THREE.PlaneGeometry(2.4, 0.22);
@@ -49,11 +50,9 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
   }
   /* ---------- city blocks ---------- */
   const solids: { x0: number; x1: number; z0: number; z1: number }[] = [];
-  const wallColors = [
-    0xf3e2b3, 0xf4b183, 0x9fd3e6, 0xe98c73, 0xf6f1e7, 0xc6e2a3, 0xe7b97f, 0xd9c3e6, 0xffffff, 0xf7d774,
-  ];
-  const placeAt: Record<string, (typeof PLACES)[number]> = {};
-  PLACES.forEach((l) => (placeAt[l.bi + ',' + l.bj] = l));
+  const wallColors = theme.wallColors;
+  const placeAt: Record<string, (typeof places)[number]> = {};
+  places.forEach((l) => (placeAt[l.bi + ',' + l.bj] = l));
   const kerbMat = new THREE.MeshLambertMaterial({ map: TX['kerb'] });
   const paveMat = new THREE.MeshLambertMaterial({ map: TX['paving'] });
   const gutterMat = M(0x202020);
@@ -83,7 +82,15 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
         // walled compound with a gate on the south side
         const yg = new THREE.PlaneGeometry(B - 2.4, B - 2.4);
         yg.rotateX(-Math.PI / 2);
-        mesh(yg, new THREE.MeshLambertMaterial({ map: TX['yard'] }), cx, 0.36, cz, null, false).receiveShadow = true;
+        mesh(
+          yg,
+          new THREE.MeshLambertMaterial({ map: TX[theme.ground === 'grass' ? 'lawn' : 'yard'] }),
+          cx,
+          0.36,
+          cz,
+          null,
+          false,
+        ).receiveShadow = true;
         const wc = wallColors[Math.floor(rnd() * wallColors.length)];
         const wm = new THREE.MeshLambertMaterial({ color: lin(wc), map: TX['plaster'] });
         const inset = 1.2,
@@ -117,10 +124,15 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
         }
         if (n === 3) shadeTree(cx + 5, cz + 5, 1.1);
       }
-      if (rnd() > 0.35) palm(x0 + B - 0.9, z0 + 0.9, 6 + rnd() * 3);
-      if (rnd() > 0.6) palm(x0 + 0.9, z0 + B - 0.9, 6 + rnd() * 3);
-      if (!L && rnd() > 0.55)
-        umbrella(cx + (rnd() - 0.5) * 10, z0 + B - 0.6, rnd() > 0.5 ? ['#E53935', '#FFFFFF'] : ['#F2B705', '#1E8A4C']);
+      if (rnd() > 0.35) {
+        if (theme.palms) palm(x0 + B - 0.9, z0 + 0.9, 6 + rnd() * 3);
+        else shadeTree(x0 + B - 1.6, z0 + 1.6, 0.9);
+      }
+      if (rnd() > 0.6) {
+        if (theme.palms) palm(x0 + 0.9, z0 + B - 0.9, 6 + rnd() * 3);
+        else shadeTree(x0 + 1.6, z0 + B - 1.6, 0.8);
+      }
+      if (!L && rnd() > 0.55) umbrella(cx + (rnd() - 0.5) * 10, z0 + B - 0.6, theme.stalls[rnd() > 0.5 ? 0 : 1]);
     }
   // poles, lamps and sagging wires along every east-west street
   for (let j = 0; j < N; j++) {
@@ -130,7 +142,7 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
       const x = bMin(i) + 0.5;
       pole(x, z, (i + j) % 2 === 0);
       const p = { x, z };
-      if (prev) wire(prev, p);
+      if (prev && theme.wires) wire(prev, p);
       prev = p;
     }
   }
@@ -139,7 +151,7 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
   const markers: THREE.Mesh[] = [];
   const beams: THREE.Mesh[] = [];
   const smoke: THREE.Sprite[] = [];
-  PLACES.forEach((L) => {
+  places.forEach((L) => {
     const cx = bC(L.bi),
       cz = bC(L.bj);
     const off = OFF[L.side];
@@ -152,16 +164,7 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
     if (L.id === 'church') {
       const wm = new THREE.MeshLambertMaterial({ color: lin(0xf7f3ea), map: TX['plaster'] });
       box(11, 7, 10, wm, bx, 0.35 + 3.5, bz - 1);
-      gable(
-        11,
-        10,
-        3.2,
-        new THREE.MeshLambertMaterial({ map: TX['corr'], color: lin(0xa0412d) }),
-        bx,
-        7.35,
-        bz - 1,
-        false,
-      );
+      gable(11, 10, 3.2, roofMat(0xa0412d), bx, 7.35, bz - 1, false);
       [-3.5, 0, 3.5].forEach((o) => {
         box(0.12, 3.6, 1.2, 0x2e86c1, bx - 5.56, 4, bz - 1 + o);
         box(0.12, 3.6, 1.2, 0x2e86c1, bx + 5.56, 4, bz - 1 + o);
@@ -183,18 +186,10 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
       box(4, 0.25, 1, 0xcfc8b8, bx, 0.72, bz + 6);
       shadeTree(bx - 7, bz + 3, 1);
       shadeTree(bx + 7, bz - 5, 0.9);
-      sign('GRACE CHAPEL', fx, 10.5, fz + 1, '#111C17', '#F2B705', 8);
+      sign(L.sign, fx, 10.5, fz + 1, '#111C17', '#F2B705', 8);
     } else if (L.id === 'chop') {
       building(w, 3.1, d, 0xe07a3f, bx, bz - 1, { flat: false });
-      const aw = box(
-        w + 1,
-        0.12,
-        3.4,
-        new THREE.MeshLambertMaterial({ map: TX['corr'], color: lin(0xc06040) }),
-        bx,
-        3.1,
-        bz + off[1] * 4.2,
-      );
+      const aw = box(w + 1, 0.12, 3.4, roofMat(0xc06040), bx, 3.1, bz + off[1] * 4.2);
       aw.rotation.x = 0.12 * off[1];
       for (const s of [-1, 1]) box(0.15, 2.8, 0.15, 0x5e4632, bx + s * (w / 2), 1.75, bz + off[1] * 5.6);
       for (const s of [-3, 0, 3]) {
@@ -225,20 +220,12 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
         scene.add(sp);
         smoke.push(sp);
       }
-      umbrella(bx - w / 2 + 1, bz + off[1] * 6.4, ['#D7263D', '#F2B705']);
-      sign('CHOP BAR', fx, 5.6, fz + off[1] * 1.5);
+      umbrella(bx - w / 2 + 1, bz + off[1] * 6.4, theme.stalls[0]);
+      sign(L.sign, fx, 5.6 + (theme.roof.pitch - 1.5) * 1.6, fz + off[1] * 1.5);
     } else if (L.id === 'home') {
       building(d, 3.1, w, 0xf3e2b3, bx - 0.6, bz, { flat: false, door: false });
       box(0.2, 2.8, w, 0x5e4632, bx + off[0] * (d / 2 + 1.4) - 0.6, 1.75, bz);
-      const v = box(
-        2.4,
-        0.12,
-        w + 0.6,
-        new THREE.MeshLambertMaterial({ map: TX['corr'], color: lin(0xb08070) }),
-        bx + off[0] * (d / 2 + 0.4) - 0.6,
-        3.2,
-        bz,
-      );
+      const v = box(2.4, 0.12, w + 0.6, roofMat(0xb08070), bx + off[0] * (d / 2 + 0.4) - 0.6, 3.2, bz);
       v.rotation.z = -0.15 * off[0];
       box(0.12, 2.1, 1.2, 0x1f5d8c, bx + off[0] * (d / 2) - 0.55, 1.4, bz);
       for (let s = 0; s < 3; s++)
@@ -249,28 +236,24 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
           0.7,
           bz - 2 + s * 0.9,
         );
-      sign('HOME', fx + off[0] * 1.2, 4.8, fz, '#3DBE6E', '#111C17', 5);
+      sign(L.sign, fx + off[0] * 1.2, 4.8 + (theme.roof.pitch - 1.5) * 1.6, fz, '#3DBE6E', '#111C17', 5);
     } else if (L.id === 'market') {
-      const rm = new THREE.MeshLambertMaterial({ map: TX['corr'], color: lin(0xc9c9c9) });
+      const rm = roofMat(0xc9c9c9);
       for (let s = 0; s < 2; s++) {
         const zz = bz - 3 + s * 6;
         for (let p = 0; p < 4; p++) box(0.2, 3.4, 0.2, 0x555555, bx - 3 + (p % 2) * 6, 2, zz + (p < 2 ? -2 : 2));
         gable(7, 5, 1.2, rm, bx, 3.7, zz, true);
       }
-      const cols = [
-        ['#E53935', '#FFFFFF'],
-        ['#F2B705', '#1E8A4C'],
-        ['#1F5D8C', '#F4EEDC'],
-      ];
+      const cols = theme.stalls;
       for (let s = 0; s < 5; s++) umbrella(bx + off[0] * 5.2, bz - 6 + s * 3, cols[s % 3]);
       for (let s = 0; s < 6; s++)
         box(0.9, 0.9, 0.9, [0xe67e22, 0xf4d03f, 0x27ae60][s % 3], bx - 2 + (s % 3) * 2, 0.8, bz - 3 + (s > 2 ? 6 : 0));
-      sign('MARKET', fx + off[0] * 2, 5.6, fz);
+      sign(L.sign, fx + off[0] * 2, 5.6, fz);
     } else if (L.id === 'tech') {
       building(w, 14, d, 0xffffff, bx, bz, { glass: true, flat: true, door: false });
       box(3, 2.4, 0.2, 0x1a1a1a, bx, 1.55, bz + off[1] * (d / 2 + 0.05));
       box(w + 2, 0.3, 2.2, 0xeeeeee, bx, 3, bz + off[1] * (d / 2 + 1));
-      sign('TECH HUB', fx, 16.6, fz);
+      sign(L.sign, fx, 16.6, fz);
     } else if (L.id === 'site') {
       const cm = M(0x9a9690);
       for (let fl = 0; fl < 3; fl++) {
@@ -302,7 +285,7 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders) {
       for (let s = 0; s < 3; s++) box(w, 0.1, 0.1, 0x8b6b3d, bx, 2 + s * 3, bz + off[1] * (d / 2 + 0.7));
       mesh(new THREE.ConeGeometry(1.6, 1.4, 10), M(0xd8b47a), bx + w / 2 + 1.2, 1.05, bz + off[1] * 3);
       for (let s = 0; s < 3; s++) box(1.2, 0.5, 0.9, 0xb9b3a8, bx - w / 2 - 0.4, 0.6 + s * 0.5, bz + off[1] * 2.5);
-      sign('SITE', fx, 12.6, fz);
+      sign(L.sign, fx, 12.6, fz);
     }
     if (!L.deco) {
       const mk = markerPos(L);
