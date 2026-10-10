@@ -50,9 +50,9 @@ export const LILLE: City = {
       bi: 3,
       bj: 2,
       side: 'E',
-      name: t('Chez Marcel – Café', 'Chez Marcel – Café'),
+      name: t('La Majesté Cafe and Pastries', 'La Majesté Café et Pâtisseries'),
       label: t('EAT', 'MANGER'),
-      sign: 'CHEZ MARCEL',
+      sign: 'LA MAJESTÉ',
       open: HOURS_EAT,
       opts: mealOpts(
         t('Waffle and coffee', 'Gaufre et café'),

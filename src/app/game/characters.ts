@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { type Avatar, HAIR_COLORS, OUTFITS, SKIN_TONES } from './avatar';
 import type { GameService } from './game.service';
 import type { Kit, Tex } from './kit';
 import { B, bMin, roadC } from './layout';
@@ -16,6 +17,7 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
     print?: Tex | null;
     wrap?: Tex | null;
     hair?: number;
+    longHair?: boolean;
   }
   function makePerson({
     shirt = 0xd7263d,
@@ -25,6 +27,7 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
     print = null,
     wrap = null,
     hair = 0x15100c,
+    longHair = false,
   }: PersonOpts = {}) {
     const g = new THREE.Group();
     const skinM = M(skin);
@@ -72,19 +75,51 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
       );
       w.rotation.x = -0.2;
       mesh(new THREE.SphereGeometry(0.28, 10, 8), new THREE.MeshLambertMaterial({ map: wrap }), 0.15, 3.12, -0.1, g);
-    } else mesh(new THREE.SphereGeometry(0.375, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2.1), M(hair), 0, 2.62, -0.02, g);
+    } else {
+      mesh(new THREE.SphereGeometry(0.375, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2.1), M(hair), 0, 2.62, -0.02, g);
+      if (longHair) mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.7, 10), M(hair), 0, 2.3, -0.2, g);
+    }
     g.userData['legs'] = legs;
     g.userData['arms'] = arms;
     return g;
   }
-  const player = makePerson({ print: TX['kente'], pants: 0x22303c });
-  {
-    const arms = player.userData['arms'] as THREE.Group[];
+  /** The player's body as the chosen look describes it, with the Bible bag on one arm. */
+  function makeHero(a: Avatar): THREE.Group {
+    const outfit = OUTFITS[a.outfit];
+    const hero = makePerson({
+      shirt: outfit.color,
+      print: outfit.print === 'kente' ? TX['kente'] : null,
+      skin: SKIN_TONES[a.skin],
+      hair: HAIR_COLORS[a.hair],
+      pants: 0x22303c,
+      dress: a.female,
+      longHair: a.female,
+    });
+    const arms = hero.userData['arms'] as THREE.Group[];
     const bk = box(0.42, 0.55, 0.14, 0x1a1a1a, 0, 0, 0, arms[1]);
     bk.position.set(0, -0.95, 0.18);
     box(0.06, 0.3, 0.15, 0xf2b705, 0, -0.95, 0.19, arms[1]);
     arms[1].rotation.x = -0.5;
+    return hero;
   }
+  // The player is a stable group (the engine moves and animates it); its body is swapped when the look changes.
+  const player = new THREE.Group();
+  let body: THREE.Group | null = null;
+  function setAvatar(a: Avatar): void {
+    if (body) {
+      player.remove(body);
+      body.traverse((o) => {
+        if (o instanceof THREE.Mesh) {
+          (o.geometry as THREE.BufferGeometry).dispose();
+        }
+      });
+    }
+    body = makeHero(a);
+    player.add(body);
+    player.userData['legs'] = body.userData['legs'];
+    player.userData['arms'] = body.userData['arms'];
+  }
+  setAvatar(svc.avatar());
   scene.add(player);
   const S0 = svc.state();
   player.position.set(S0.x, 0, S0.z);
@@ -183,5 +218,5 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
     return g;
   });
 
-  return { player, npcs, S0 };
+  return { player, npcs, S0, setAvatar };
 }

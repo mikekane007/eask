@@ -21,9 +21,10 @@ import { LangSwitchComponent } from './lang-switch.component';
           @if (svc.city()?.reviewed === false) {
             <p class="keys draft">{{ i18n.t('draftNote') }}</p>
           }
-          <button class="mbtn" (click)="svc.start()">
+          <button class="mbtn" (click)="svc.begin()">
             {{ svc.hasSave() ? i18n.t('continueGame') : i18n.t('stepOut') }}
           </button>
+          <button class="mbtn ghost" (click)="svc.avatarOpen.set(true)">{{ i18n.t('lookTitle') }}</button>
           @if (svc.hasSave()) {
             <button class="mbtn ghost" (click)="svc.reset()">{{ i18n.t('startOver') }}</button>
           }

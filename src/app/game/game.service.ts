@@ -1,4 +1,5 @@
 import { Injectable, NgZone, computed, inject, signal } from '@angular/core';
+import { type Avatar, DEFAULT_AVATAR, parseAvatar } from './avatar';
 import { CITIES, getCity } from './cities';
 import { I18n } from './i18n/i18n.service';
 import { markerPos } from './layout';
@@ -11,6 +12,7 @@ import type { Answer, Person, Place, PlaceOption, Quality } from './types';
 const storageKey = (cityId: string) => `goandtell:${cityId}`;
 /** Saves made before cities existed were stored under this key and belong to Accra. */
 const LEGACY_KEY = 'goandtell';
+const AVATAR_KEY = 'goandtell:avatar';
 
 export type Near = { kind: 'place'; ref: Place } | { kind: 'npc'; ref: Person };
 
@@ -48,6 +50,10 @@ export class GameService {
   private readonly zone = inject(NgZone);
   private clockCarry = 0;
 
+  constructor() {
+    this.readAvatar();
+  }
+
   readonly cities = CITIES;
   /** The city being played, or null while the city picker is showing. */
   readonly cityId = signal<string | null>(null);
@@ -69,6 +75,12 @@ export class GameService {
     return weatherAt(c.id, c.climate, s.day, s.hour);
   });
   readonly hasSave = signal(false);
+  /** What the player looks like. Shared by every city and kept on this device. */
+  readonly avatar = signal<Avatar>(DEFAULT_AVATAR);
+  /** True once the player has chosen a look, so the choice screen is shown only the first time. */
+  readonly avatarChosen = signal(false);
+  readonly avatarOpen = signal(false);
+  private startAfterAvatar = false;
   readonly playing = signal(false);
   readonly goalsOpen = signal(false);
   readonly current = signal<Near | null>(null);
@@ -217,6 +229,46 @@ export class GameService {
 
   start(): void {
     this.playing.set(true);
+  }
+
+  /** The Step out button: the first time, ask for a look before starting. */
+  begin(): void {
+    if (this.avatarChosen()) {
+      this.start();
+      return;
+    }
+    this.startAfterAvatar = true;
+    this.avatarOpen.set(true);
+  }
+
+  setAvatar(a: Avatar): void {
+    this.avatar.set(a);
+  }
+
+  /** Saves the look on this device and carries on with whatever the player was doing. */
+  confirmAvatar(): void {
+    this.avatarChosen.set(true);
+    try {
+      localStorage.setItem(AVATAR_KEY, JSON.stringify(this.avatar()));
+    } catch {
+      /* storage unavailable: the look still applies for this visit */
+    }
+    this.avatarOpen.set(false);
+    if (this.startAfterAvatar) {
+      this.startAfterAvatar = false;
+      this.start();
+    }
+  }
+
+  private readAvatar(): void {
+    try {
+      const raw = localStorage.getItem(AVATAR_KEY);
+      if (raw === null) return;
+      this.avatar.set(parseAvatar(JSON.parse(raw)));
+      this.avatarChosen.set(true);
+    } catch {
+      /* corrupt or unavailable: keep the default */
+    }
   }
 
   reset(): void {

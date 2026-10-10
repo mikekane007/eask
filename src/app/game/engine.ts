@@ -100,7 +100,8 @@ export async function createEngine(
           blocked: real.blocked,
         })
       : null;
-  const { player, npcs, S0 } = createCharacters(scene, kit, svc, city);
+  const { player, npcs, S0, setAvatar: setLook } = createCharacters(scene, kit, svc, city);
+  let lookShown = svc.avatar();
   const input = createInput(canvas, svc, zone);
 
   // Detail level: applied when it changes, and lowered automatically if the frame rate cannot be held.
@@ -210,6 +211,10 @@ export async function createEngine(
     const dt = Math.min(0.05, realDt);
     last = now;
     applyGraphics();
+    if (svc.avatar() !== lookShown) {
+      lookShown = svc.avatar();
+      setLook(lookShown);
+    }
     if (svc.playing() && meter.push(realDt * 1000) === 'slow') zone.run(() => graphics.lowerAutomatically());
     const p = player.position;
     const st = svc.state();

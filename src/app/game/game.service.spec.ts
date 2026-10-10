@@ -368,3 +368,44 @@ describe('GameService', () => {
     });
   });
 });
+
+describe('choosing a character', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('asks for a look the first time, then starts the game', () => {
+    const svc = makeService();
+    svc.begin();
+    expect(svc.avatarOpen()).toBe(true);
+    expect(svc.playing()).toBe(false);
+    svc.setAvatar({ female: true, skin: 1, hair: 2, outfit: 3 });
+    svc.confirmAvatar();
+    expect(svc.avatarOpen()).toBe(false);
+    expect(svc.playing()).toBe(true);
+  });
+
+  it('remembers the look and does not ask again', () => {
+    const first = makeService();
+    first.setAvatar({ female: true, skin: 1, hair: 2, outfit: 3 });
+    first.confirmAvatar();
+    const second = makeService();
+    expect(second.avatar()).toEqual({ female: true, skin: 1, hair: 2, outfit: 3 });
+    second.begin();
+    expect(second.avatarOpen()).toBe(false);
+    expect(second.playing()).toBe(true);
+  });
+
+  it('does not start the game when the look was opened from the menu', () => {
+    const svc = makeService();
+    svc.avatarOpen.set(true);
+    svc.confirmAvatar();
+    expect(svc.playing()).toBe(false);
+  });
+
+  it('ignores a corrupt saved look', () => {
+    localStorage.setItem('goandtell:avatar', '{nope');
+    const svc = makeService();
+    expect(svc.avatarChosen()).toBe(false);
+  });
+});

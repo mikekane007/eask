@@ -711,3 +711,101 @@ button:focus-visible {
   color: var(--muted);
   opacity: 0.8;
 }
+
+/* Character choice */
+.modal-in.avatar h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  color: var(--gold);
+  margin: 0 0 8px;
+}
+.look {
+  position: relative;
+  width: 90px;
+  height: 150px;
+  margin: 6px auto 10px;
+}
+.look i {
+  position: absolute;
+  left: 50%;
+  display: block;
+  transform: translateX(-50%);
+}
+.l-hair {
+  top: 0;
+  width: 40px;
+  height: 26px;
+  border-radius: 20px 20px 6px 6px;
+}
+.l-hair.long {
+  height: 62px;
+  border-radius: 20px 20px 14px 14px;
+}
+.l-head {
+  top: 10px;
+  width: 34px;
+  height: 36px;
+  border-radius: 50%;
+}
+.l-body {
+  top: 48px;
+  width: 52px;
+  height: 56px;
+  border-radius: 14px 14px 6px 6px;
+}
+.l-body.dress {
+  height: 70px;
+  border-radius: 14px 14px 26px 26px;
+}
+.l-leg {
+  top: 112px;
+  width: 30px;
+  height: 36px;
+  border-radius: 0 0 8px 8px;
+  z-index: -1;
+}
+.seg {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.seg button {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--paper);
+  font: 700 14px var(--body);
+  cursor: pointer;
+}
+.seg button.on {
+  background: var(--gold);
+  color: var(--night);
+  border-color: var(--gold);
+}
+.opt-title {
+  margin: 12px 0 4px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.sw {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.sw.on {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--night) inset;
+}
+.sw.kente {
+  background: repeating-linear-gradient(45deg, #d7263d 0 5px, #f2b705 5px 10px, #1e8a4c 10px 15px);
+}
