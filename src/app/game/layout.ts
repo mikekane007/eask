@@ -1,4 +1,6 @@
-export const N = 5, B = 22, R = 10;
+export const N = 5;
+export const B = 22;
+const R = 10;
 export const T = N * B + (N + 1) * R;
 export const H = T / 2;
 export const bMin = (i: number) => -H + R + i * (B + R);

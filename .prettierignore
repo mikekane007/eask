@@ -1,0 +1,9 @@
+dist
+.angular
+node_modules
+coverage
+package-lock.json
+.playwright-mcp
+src/app/game/people.data.ts
+playwright-report
+test-results

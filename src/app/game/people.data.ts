@@ -1,7 +1,7 @@
 export type Quality = 'good' | 'ok' | 'bad';
 /** [text, quality, feedback, scripture reference] */
 export type Answer = [string, Quality, string, string];
-export interface Round { q: string; a: Answer[]; }
+interface Round { q: string; a: Answer[]; }
 export interface Person {
   id: string; name: string; role: string; shirt: number; req: number;
   spot: ['h' | 'v', number, number, number]; rounds: Round[];

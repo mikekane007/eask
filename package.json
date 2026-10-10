@@ -1,21 +1,30 @@
 {
   "name": "go-and-tell",
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.spec.json --noEmit && tsc -p e2e/tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "knip": "knip",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run knip",
+    "prepare": "lefthook install",
+    "e2e": "playwright test"
   },
   "private": true,
   "dependencies": {
     "@angular/common": "^19.2.0",
     "@angular/compiler": "^19.2.0",
     "@angular/core": "^19.2.0",
-    "@angular/forms": "^19.2.0",
     "@angular/platform-browser": "^19.2.0",
-    "@angular/platform-browser-dynamic": "^19.2.0",
     "@angular/router": "^19.2.0",
     "rxjs": "~7.8.0",
     "three": "^0.128.0",
@@ -26,14 +35,26 @@
     "@angular-devkit/build-angular": "^19.2.8",
     "@angular/cli": "^19.2.8",
     "@angular/compiler-cli": "^19.2.0",
-    "@types/jasmine": "~5.1.0",
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.64.0",
+    "@secretlint/secretlint-rule-preset-recommend": "^13.0.7",
+    "@types/node": "^24.19.2",
     "@types/three": "^0.128.0",
-    "jasmine-core": "~5.6.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.7.2"
+    "angular-eslint": "^19.8.1",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "jsdom": "^29.1.1",
+    "knip": "^6.41.0",
+    "lefthook": "^2.2.1",
+    "prettier": "^3.9.9",
+    "secretlint": "^13.0.7",
+    "typescript": "~5.7.2",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
