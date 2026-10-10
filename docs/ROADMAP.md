@@ -37,7 +37,7 @@ Legend: ✅ done · 🔄 in progress · ⏳ planned · ⏸ waiting on owner
 
 ## Phase 5: Friends' feedback (2026-10-10)
 
-- ✅ 5.1 Lille café renamed to "La Majesté Cafe and Pastries" (the church was already "La Source Church")
+- ✅ 5.1 Lille café renamed to "La Majesté Cafe and Pastries" and the church to "Lille City Church"
 - ✅ 5.2 Choose your character: guy or lady, skin, hair, clothes (kept on the device, shared by every city)
 - ✅ 5.3 Autopilot: walk to the church, café, home or a person around the buildings (grid path finding, `pathfind.ts`)
 - ✅ 5.4 Typed replies on one question per person, judged by ideas in both languages (`typed-answer.ts`, content in `cities/typed.ts`, draft for review)
