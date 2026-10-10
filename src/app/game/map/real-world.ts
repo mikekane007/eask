@@ -47,10 +47,16 @@ function addCutaway(mat: THREE.Material, cut: Cutaway): void {
       .replace(
         'void main() {',
         `void main() {
-  {
+  if (uR > 0.01) {
     vec3 ab = uTarget - uCam;
     float t = dot(vWorldPos - uCam, ab) / dot(ab, ab);
-    if (t > 0.0 && t < 0.97 && distance(vWorldPos, uCam + ab * t) < uR) discard;
+    if (t > 0.0 && t < 0.97) {
+      // fully open in the middle, thinning out towards the rim, so there is no hard circle
+      float d = distance(vWorldPos, uCam + ab * t);
+      float open = 1.0 - smoothstep(uR * 0.45, uR, d);
+      float noise = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+      if (open > noise) discard;
+    }
   }`,
       );
   };
@@ -118,7 +124,8 @@ export function createRealWorld(
   const cut: Cutaway = {
     uCam: { value: new THREE.Vector3() },
     uTarget: { value: new THREE.Vector3() },
-    uR: { value: 3.6 },
+    // the engine opens this only while a building actually hides the player
+    uR: { value: 0 },
   };
 
   // ---- ground
@@ -231,8 +238,10 @@ export function createRealWorld(
     const wr = col.r * shade;
     const wg = col.g * shade;
     const wb = col.b * shade;
-    const cx = pts.reduce((s, p) => s + p[0], 0) / n;
-    const cz = pts.reduce((s, p) => s + p[1], 0) / n;
+    // Which way the footprint runs decides which side of each wall is the outside (exact even for L-shapes).
+    let area2 = 0;
+    for (let i = 0; i < n; i++) area2 += pts[i][0] * pts[(i + 1) % n][1] - pts[(i + 1) % n][0] * pts[i][1];
+    const ccw = area2 > 0;
 
     let run = 0;
     for (let i = 0; i < n; i++) {
@@ -242,12 +251,8 @@ export function createRealWorld(
       const dz = c[1] - a[1];
       const len = Math.hypot(dx, dz);
       if (len < 0.05) continue;
-      let nx = dz / len;
-      let nz = -dx / len;
-      if (nx * ((a[0] + c[0]) / 2 - cx) + nz * ((a[1] + c[1]) / 2 - cz) < 0) {
-        nx = -nx;
-        nz = -nz;
-      }
+      const nx = ((ccw ? 1 : -1) * dz) / len;
+      const nz = ((ccw ? -1 : 1) * dx) / len;
       const base = wp.length / 3;
       wp.push(a[0], 0, a[1], c[0], 0, c[1], c[0], h, c[1], a[0], h, a[1]);
       for (let k = 0; k < 4; k++) wn.push(nx, 0, nz);
@@ -255,7 +260,9 @@ export function createRealWorld(
       const u1 = (run + len) / 6;
       wu.push(u0, 0, u1, 0, u1, h / 6.2, u0, h / 6.2);
       for (let k = 0; k < 4; k++) wc.push(wr, wg, wb);
-      wi.push(base, base + 1, base + 2, base, base + 2, base + 3);
+      // faces point outwards, so only the outside of a wall is drawn and a see-through hole shows the street beyond
+      if (ccw) wi.push(base, base + 2, base + 1, base, base + 3, base + 2);
+      else wi.push(base, base + 1, base + 2, base, base + 2, base + 3);
       run += len;
     }
 
@@ -269,7 +276,14 @@ export function createRealWorld(
         rn.push(0, 1, 0);
         rc.push(col.r, col.g, col.b);
       }
-      for (const i of tri) ri.push(base + i);
+      // each roof triangle faces up
+      for (let t = 0; t < tri.length; t += 3) {
+        const [i0, i1, i2] = [tri[t], tri[t + 1], tri[t + 2]];
+        const up =
+          (pts[i1][0] - pts[i0][0]) * (pts[i2][1] - pts[i0][1]) - (pts[i2][0] - pts[i0][0]) * (pts[i1][1] - pts[i0][1]);
+        if (up < 0) ri.push(base + i0, base + i1, base + i2);
+        else ri.push(base + i0, base + i2, base + i1);
+      }
     }
   });
 
@@ -296,15 +310,12 @@ export function createRealWorld(
     emissive: lin(0xffc27a),
     emissiveMap: TX['lit'],
     emissiveIntensity: 0,
-    side: THREE.DoubleSide,
+    // outer faces only: walls face outwards, so a see-through hole shows the street, not the rooms
   });
   wallMat.userData.glass = false;
   facadeMats.push(wallMat);
   cutaway({ p: wp, n: wn, c: wc, i: wi, u: wu }, wallMat);
-  cutaway(
-    { p: rp, n: rn, c: rc, i: ri },
-    new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }),
-  );
+  cutaway({ p: rp, n: rn, c: rc, i: ri }, new THREE.MeshLambertMaterial({ vertexColors: true }));
 
   // ---- trees: in parks and along some streets, drawn with instancing
   const treeSpots: { x: number; z: number; s: number }[] = [];
@@ -446,6 +457,8 @@ export function createRealWorld(
     smoke: [] as THREE.Sprite[],
     clouds: kit.makeClouds(),
     blocked: (x: number, z: number, r: number) => collision.blocked(x, z, r),
+    /** Height of the building standing at a spot, 0 in the open. */
+    heightAt: (x: number, z: number) => collision.heightAt(x, z),
     cut,
     /** Draws only this share (0 to 1) of the trees, for slower machines. */
     setTreeShare(share: number): void {

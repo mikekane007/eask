@@ -8,6 +8,7 @@ import { createInput } from './input';
 import { createKit } from './kit';
 import { H } from './layout';
 import { createLighting } from './lighting';
+import { cameraSpot, easeOpen, sightBlocked } from './map/occlusion';
 import { type Pt, findPath } from './pathfind';
 import { createPedestrians } from './pedestrians';
 import { buildGraph, networks } from './map/road-graph';
@@ -217,6 +218,15 @@ export async function createEngine(
     const len = Math.hypot(dx, dz) || 1;
     return { x: dx / len, z: dz / len };
   }
+
+  // See-through hole in buildings that hide the player (real maps only).
+  const CUT_RADIUS = 2.4;
+  let sightClock = 0;
+  let hidden = false;
+  let hiddenFromUsual = false;
+  /** 0 = the usual view from behind, 1 = looking down from above. */
+  let tilt = 0;
+  let holeOpen = 0;
 
   let hourShown = -1;
   let lastStep = 0;
@@ -507,7 +517,25 @@ export async function createEngine(
       if (svc.playing() && churchAt) sound.bell(st.hour, Math.hypot(p.x - churchAt.x, p.z - churchAt.z));
       lastHour = st.hour;
     }
-    camT.set(p.x, 19 * svc.zoom(), p.z + 21 * svc.zoom());
+    const zoom = svc.zoom();
+    if (real) {
+      // A building between the camera and the player: tilt towards a view from above, where roofs rarely get in the way.
+      sightClock -= realDt;
+      if (sightClock <= 0) {
+        sightClock = 0.2;
+        const eye = { x: p.x, y: 1.6, z: p.z };
+        hiddenFromUsual = sightBlocked(real.heightAt, eye, { x: p.x, y: 19 * zoom, z: p.z + 21 * zoom });
+        hidden = sightBlocked(real.heightAt, eye, cam.position);
+      }
+      tilt = easeOpen(tilt, hiddenFromUsual, realDt, 1.2);
+    }
+    const lift = tilt * tilt * (3 - 2 * tilt);
+    camT.set(p.x, (19 + (30 - 19) * lift) * zoom, p.z + (21 + (4 - 21) * lift) * zoom);
+    if (real) {
+      // never let the camera end up inside a building: slide it in towards the player instead
+      const spot = cameraSpot(real.heightAt, { x: p.x, y: 1.6, z: p.z }, camT);
+      camT.set(spot.x, spot.y, spot.z);
+    }
     if (!camInit) {
       cam.position.copy(camT);
       camInit = true;
@@ -516,7 +544,9 @@ export async function createEngine(
     cam.lookAt(camL);
     sky.position.copy(cam.position);
     if (real) {
-      // keep buildings from hiding the player: cut a see-through tunnel from the camera to them
+      // If the player is still hidden even so, open a small soft see-through hole; close it otherwise.
+      holeOpen = easeOpen(holeOpen, hidden, realDt);
+      real.cut.uR.value = holeOpen * CUT_RADIUS;
       real.cut.uCam.value.copy(cam.position);
       real.cut.uTarget.value.set(p.x, 1.3, p.z);
     }

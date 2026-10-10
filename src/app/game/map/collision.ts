@@ -9,6 +9,8 @@ interface Footprint {
   maxX: number;
   minZ: number;
   maxZ: number;
+  /** Height in metres (0 for water and other flat solids). */
+  h: number;
 }
 
 /**
@@ -29,7 +31,8 @@ export class MapCollision {
   ) {
     this.halfW = width / 2;
     this.halfH = height / 2;
-    for (const flat of [...buildings.map((b) => b.p), ...solids]) {
+    const shapes = [...buildings.map((b) => ({ flat: b.p, h: b.h })), ...solids.map((flat) => ({ flat, h: 0 }))];
+    for (const { flat, h } of shapes) {
       const pts = toPoints(flat);
       if (pts.length < 3) continue;
       const fp: Footprint = {
@@ -38,6 +41,7 @@ export class MapCollision {
         maxX: Math.max(...pts.map((p) => p[0])),
         minZ: Math.min(...pts.map((p) => p[1])),
         maxZ: Math.max(...pts.map((p) => p[1])),
+        h,
       };
       for (let cx = Math.floor(fp.minX / CELL); cx <= Math.floor(fp.maxX / CELL); cx++) {
         for (let cz = Math.floor(fp.minZ / CELL); cz <= Math.floor(fp.maxZ / CELL); cz++) {
@@ -52,6 +56,18 @@ export class MapCollision {
 
   private static key(cx: number, cz: number): number {
     return (cx + 5000) * 10000 + (cz + 5000);
+  }
+
+  /** How tall the building standing at (x, z) is, or 0 in the open. */
+  heightAt(x: number, z: number): number {
+    const list = this.cells.get(MapCollision.key(Math.floor(x / CELL), Math.floor(z / CELL)));
+    if (!list) return 0;
+    let top = 0;
+    for (const fp of list) {
+      if (fp.h <= top || x < fp.minX || x > fp.maxX || z < fp.minZ || z > fp.maxZ) continue;
+      if (pointInPolygon(x, z, fp.pts)) top = fp.h;
+    }
+    return top;
   }
 
   /** True if a circle of radius `r` centred on (x, z) overlaps a building or leaves the map. */
