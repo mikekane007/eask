@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MapCollision } from './collision';
-import { cameraSpot, easeOpen, sightBlocked } from './occlusion';
+import { cameraSpot, easeOpen, leastTilt, sightBlocked, talkShot } from './occlusion';
 
 // A 20 m tall block between z = 5 and z = 15, from x = -10 to 10.
 const box = (x0: number, z0: number, x1: number, z1: number) => [x0, z0, x1, z0, x1, z1, x0, z1];
@@ -62,6 +62,60 @@ describe('sightBlocked', () => {
 
   it('copes with the camera straight overhead', () => {
     expect(sightBlocked(() => 100, eye, { x: 0, y: 30, z: 0 })).toBe(false);
+  });
+});
+
+describe('leastTilt', () => {
+  // the camera rises from behind the player (t = 0) towards above them (t = 1)
+  const camAt = (t: number) => ({ x: 0, y: 19 + 9 * t, z: 21 - 12 * t });
+  const mid = new MapCollision([{ h: 10, a: 60, p: box(-10, 5, 10, 8) }], 200, 200);
+
+  it('stays at the usual angle when nothing is in the way', () => {
+    expect(leastTilt(() => 0, eye, camAt)).toBe(0);
+  });
+
+  it('tilts only part of the way over a building of middling height', () => {
+    const t = leastTilt((x, z) => mid.heightAt(x, z), eye, camAt);
+    expect(t).toBeGreaterThan(0);
+    expect(t).toBeLessThan(1);
+    expect(sightBlocked((x, z) => mid.heightAt(x, z), eye, camAt(t))).toBe(false);
+  });
+
+  it('goes all the way up when no angle clears the building', () => {
+    expect(leastTilt((x, z) => tall.heightAt(x, z), eye, camAt)).toBe(1);
+  });
+});
+
+describe('talkShot', () => {
+  const mid = { x: 0, z: 0 };
+
+  it('looks from the preferred side in the open', () => {
+    const shot = talkShot(() => 0, mid, 0);
+    expect(shot?.x).toBeCloseTo(0);
+    expect(shot?.z).toBeCloseTo(11);
+  });
+
+  it('looks along a narrow street when looking across it is blocked', () => {
+    // a 6 m wide street running along x, with tall buildings on both sides
+    const street = new MapCollision(
+      [
+        { h: 15, a: 1000, p: box(-50, 3, 50, 30) },
+        { h: 15, a: 1000, p: box(-50, -30, 50, -3) },
+      ],
+      200,
+      200,
+    );
+    const at = (x: number, z: number) => street.heightAt(x, z);
+    const shot = talkShot(at, mid, 0);
+    expect(shot).not.toBeNull();
+    if (!shot) return;
+    expect(Math.abs(shot.z)).toBeLessThan(3);
+    expect(sightBlocked(at, { x: 0, y: 1.6, z: 0 }, shot)).toBe(false);
+  });
+
+  it('gives up when the pair is shut in on every side', () => {
+    const yard = new MapCollision([{ h: 20, a: 1e4, p: box(-60, -60, 60, 60) }], 200, 200);
+    expect(talkShot((x, z) => (Math.hypot(x, z) < 2 ? 0 : yard.heightAt(x, z)), mid, 0)).toBeNull();
   });
 });
 

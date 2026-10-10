@@ -55,9 +55,11 @@ export interface Blocks {
 
 const empty = (): Geo => ({ p: [], n: [], u: [], c: [], i: [] });
 
-/** Facade texture tile: 6 m wide (two window bays) by 6.2 m (two storeys). */
+/** Shop-front texture tile: 6 m wide. */
 const TILE_W = 6;
-const TILE_H = 6.2;
+/** Facade texture tile: 12 m wide (four window bays) by 12.4 m (four storeys). Must match facades.ts. */
+const WALL_TILE_W = 12;
+const WALL_TILE_H = 12.4;
 /** Darkening at the foot of walls, which makes buildings sit on the ground. */
 const FOOT_SHADE = 0.62;
 
@@ -177,7 +179,7 @@ export function buildBlocks(
     const area = Math.abs(area2(pts)) / 2;
 
     // ---- walls, edge by edge
-    let run = b.seed * TILE_W; // start each building at a different point of the facade pattern
+    let run = b.seed * WALL_TILE_W; // start each building at a different point of the facade pattern
     for (let i = 0; i < n; i++) {
       const a = pts[i];
       const c = pts[(i + 1) % n];
@@ -189,8 +191,8 @@ export function buildBlocks(
       const nx = ((ccw ? 1 : -1) * dz) / len;
       const nz = ((ccw ? -1 : 1) * dx) / len;
       const [p0, p1] = ccw ? [c, a] : [a, c];
-      const u0 = run / TILE_W;
-      const u1 = (run + len) / TILE_W;
+      const u0 = run / WALL_TILE_W;
+      const u1 = (run + len) / WALL_TILE_W;
       const [ua, ub] = ccw ? [u1, u0] : [u0, u1];
       const normal: [number, number, number] = [nx, 0, nz];
 
@@ -265,8 +267,10 @@ export function buildBlocks(
       // facade above the shop band (or from the ground for plain buildings)
       const y0 = shopHere ? gf : 0;
       if (b.h - y0 > 0.2) {
-        const v0 = shopHere ? 0 : -gf / TILE_H;
-        const v1 = (b.h - gf) / TILE_H;
+        // start each building on a different storey of the tile, so its lit windows differ from its neighbours'
+        const storey = Math.floor(((b.seed * 13) % 1) * 4) / 4;
+        const v0 = storey + (shopHere ? 0 : -gf / WALL_TILE_H);
+        const v1 = storey + (b.h - gf) / WALL_TILE_H;
         const foot = shopHere ? 0.92 : FOOT_SHADE;
         const topShade = 1.04;
         quad(

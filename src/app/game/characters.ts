@@ -30,10 +30,87 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
     merged.userData['shared'] = true;
     return merged;
   };
+  /** A smooth round body part from a side profile of [radius, height] pairs, flattened front to back. */
+  const turned = (profile: [number, number][], depth: number) =>
+    new THREE.LatheGeometry(
+      profile.map(([r, y]) => new THREE.Vector2(r, y)),
+      18,
+    ).scale(1, 1, depth);
+  // Every body part is built once and shared by everyone in the city.
+  const LEG = mergeAll([new THREE.CylinderGeometry(0.14, 0.105, 0.95, 12).translate(0, -0.48, 0)]);
+  const SHOE = mergeAll([new THREE.SphereGeometry(0.15, 12, 8).scale(0.9, 0.55, 1.55).translate(0, -0.96, 0.08)]);
+  const HIPS = mergeAll([new THREE.CylinderGeometry(0.37, 0.35, 0.3, 16).scale(1, 1, 0.85).translate(0, 1.02, 0)]);
+  // chest, waist and sloping shoulders in one curve, rising into the neck
+  const TORSO = mergeAll([
+    turned(
+      [
+        [0.34, 1.1],
+        [0.37, 1.3],
+        [0.44, 1.62],
+        [0.47, 1.86],
+        [0.43, 2.03],
+        [0.28, 2.15],
+        [0.14, 2.2],
+      ],
+      0.8,
+    ),
+  ]);
+  const TORSO_F = mergeAll([
+    turned(
+      [
+        [0.33, 1.1],
+        [0.31, 1.32],
+        [0.4, 1.66],
+        [0.42, 1.86],
+        [0.38, 2.03],
+        [0.25, 2.15],
+        [0.13, 2.2],
+      ],
+      0.8,
+    ),
+  ]);
+  // a skirt that flares from the waist
+  const DRESS = mergeAll([
+    turned(
+      [
+        [0.64, 0.28],
+        [0.6, 0.45],
+        [0.45, 0.95],
+        [0.34, 1.3],
+      ],
+      0.9,
+    ),
+  ]);
+  const SLEEVE = mergeAll([
+    new THREE.SphereGeometry(0.15, 10, 8),
+    new THREE.CylinderGeometry(0.14, 0.125, 0.45, 10).translate(0, -0.2, 0),
+  ]);
+  const FOREARM = mergeAll([
+    new THREE.CylinderGeometry(0.11, 0.09, 0.56, 10).translate(0, -0.68, 0),
+    new THREE.SphereGeometry(0.11, 10, 8).scale(0.85, 1.15, 0.7).translate(0, -1.0, 0),
+  ]);
+  // neck, head, ears and nose: one shape in the skin colour
+  const HEAD = mergeAll([
+    new THREE.CylinderGeometry(0.13, 0.15, 0.25, 10).translate(0, 2.22, 0),
+    new THREE.SphereGeometry(0.36, 20, 16).scale(0.95, 1.1, 1).translate(0, 2.58, 0),
+    new THREE.SphereGeometry(0.07, 8, 6).scale(0.5, 1, 0.8).translate(-0.34, 2.58, 0),
+    new THREE.SphereGeometry(0.07, 8, 6).scale(0.5, 1, 0.8).translate(0.34, 2.58, 0),
+    new THREE.SphereGeometry(0.055, 8, 6).scale(0.8, 1, 1).translate(0, 2.53, 0.36),
+  ]);
+  const EYE_WHITES = mergeAll([
+    // flattened so they sit on the face rather than bulge out of it
+    new THREE.SphereGeometry(0.07, 10, 8).scale(1, 1, 0.45).translate(-0.13, 2.63, 0.315),
+    new THREE.SphereGeometry(0.07, 10, 8).scale(1, 1, 0.45).translate(0.13, 2.63, 0.315),
+  ]);
+  // pupils and a smile (the lower half of a ring)
   const FACE = mergeAll([
-    new THREE.SphereGeometry(0.045, 6, 4).translate(-0.13, 2.62, 0.32),
-    new THREE.SphereGeometry(0.045, 6, 4).translate(0.13, 2.62, 0.32),
-    new THREE.BoxGeometry(0.15, 0.035, 0.03).translate(0, 2.44, 0.335),
+    new THREE.SphereGeometry(0.038, 8, 6).scale(1, 1, 0.5).translate(-0.13, 2.63, 0.345),
+    new THREE.SphereGeometry(0.038, 8, 6).scale(1, 1, 0.5).translate(0.13, 2.63, 0.345),
+    new THREE.TorusGeometry(0.07, 0.015, 4, 10, Math.PI).rotateZ(Math.PI).translate(0, 2.5, 0.34),
+  ]);
+  const WRAP = mergeAll([
+    new THREE.CylinderGeometry(0.4, 0.36, 0.42, 14).rotateX(-0.2).translate(0, 2.92, -0.03),
+    new THREE.SphereGeometry(0.28, 10, 8).translate(0.15, 3.12, -0.1),
   ]);
   const BROWS = mergeAll([
     new THREE.BoxGeometry(0.13, 0.035, 0.03).translate(-0.13, 2.72, 0.33),
@@ -68,48 +145,29 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
       arms: THREE.Group[] = [];
     for (const s of [-1, 1]) {
       const pv = new THREE.Group();
-      pv.position.set(0.19 * s, 1.02, 0);
+      pv.position.set(0.18 * s, 1.02, 0);
       g.add(pv);
-      mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.95, 8), dress ? skinM : M(pants), 0, -0.48, 0, pv);
-      mesh(new THREE.BoxGeometry(0.24, 0.16, 0.44), M(0x2a1f1a), 0, -0.98, 0.07, pv);
+      mesh(LEG, dress ? skinM : M(pants), 0, 0, 0, pv);
+      mesh(SHOE, M(0x2a1f1a), 0, 0, 0, pv);
       legs.push(pv);
     }
-    if (dress) mesh(new THREE.CylinderGeometry(0.38, 0.66, 1, 14), clothM, 0, 0.78, 0, g);
-    else mesh(new THREE.CylinderGeometry(0.38, 0.36, 0.28, 12), M(pants), 0, 1.02, 0, g);
-    const chest = mesh(new THREE.CylinderGeometry(0.47, 0.37, 1, 12), clothM, 0, 1.62, 0, g);
-    mesh(new THREE.SphereGeometry(0.47, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), clothM, 0, 2.1, 0, g).scale.set(
-      1,
-      0.35,
-      1,
-    );
+    mesh(dress ? DRESS : HIPS, dress ? clothM : M(pants), 0, 0, 0, g);
+    const chest = mesh(dress ? TORSO_F : TORSO, clothM, 0, 0, 0, g);
     for (const s of [-1, 1]) {
       const pv = new THREE.Group();
-      pv.position.set(0.56 * s, 2.05, 0);
+      pv.position.set((dress ? 0.5 : 0.55) * s, 2.02, 0);
       g.add(pv);
-      mesh(new THREE.CylinderGeometry(0.15, 0.14, 0.42, 8), clothM, 0, -0.18, 0, pv);
-      mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.6, 8), skinM, 0, -0.68, 0, pv);
-      mesh(new THREE.SphereGeometry(0.12, 8, 6), skinM, 0, -1, 0, pv);
+      mesh(SLEEVE, clothM, 0, 0, 0, pv);
+      mesh(FOREARM, skinM, 0, 0, 0, pv);
       pv.rotation.z = 0.08 * s;
       arms.push(pv);
     }
-    mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.25, 8), skinM, 0, 2.22, 0, g);
-    const head = mesh(new THREE.SphereGeometry(0.36, 16, 12), skinM, 0, 2.58, 0, g);
-    head.scale.set(1, 1.08, 1);
-    // face: eyes and mouth in one shape, eyebrows in another (two draws instead of five)
+    mesh(HEAD, skinM, 0, 0, 0, g);
+    mesh(EYE_WHITES, M(0xf4f1ea), 0, 0, 0, g, false);
     mesh(FACE, M(0x1a1210), 0, 0, 0, g, false);
     mesh(BROWS, M(hair), 0, 0, 0, g, false);
-    if (wrap) {
-      const w = mesh(
-        new THREE.CylinderGeometry(0.4, 0.36, 0.42, 14),
-        new THREE.MeshLambertMaterial({ map: wrap }),
-        0,
-        2.92,
-        -0.03,
-        g,
-      );
-      w.rotation.x = -0.2;
-      mesh(new THREE.SphereGeometry(0.28, 10, 8), new THREE.MeshLambertMaterial({ map: wrap }), 0.15, 3.12, -0.1, g);
-    } else mesh(HAIR[style], M(hair), 0, 0, 0, g);
+    if (wrap) mesh(WRAP, new THREE.MeshLambertMaterial({ map: wrap }), 0, 0, 0, g);
+    else mesh(HAIR[style], M(hair), 0, 0, 0, g);
     if (scarf !== null) mesh(SCARF, M(scarf), 0, 0, 0, g);
     g.userData['chest'] = chest;
     g.userData['legs'] = legs;

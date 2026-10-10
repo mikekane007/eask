@@ -6,14 +6,18 @@ export type RoofSurface = 'tiles' | 'zinc' | 'concrete';
 
 type Rect = [number, number, number, number];
 
+/** Window bays (3 m) and storeys (3.1 m) in one facade tile, 128 px each. Must match WALL_TILE_* in buildings.ts. */
+const BAYS = 4;
+const STOREYS = 4;
+
 /**
- * Window positions inside one facade tile (256 x 256 px = 6 m wide, two storeys of 3.1 m). The facade and the
+ * Window positions inside one facade tile (512 x 512 px = 12 m wide, four storeys of 3.1 m). The facade and the
  * night-time "lit windows" map are drawn from the same list so the glow always sits in the windows.
  */
 function windows(style: FacadeStyle): Rect[] {
   const out: Rect[] = [];
-  for (let bx = 0; bx < 2; bx++)
-    for (let by = 0; by < 2; by++) {
+  for (let bx = 0; bx < BAYS; bx++)
+    for (let by = 0; by < STOREYS; by++) {
       if (style === 'brick') out.push([bx * 128 + 38, by * 128 + 22, 52, 80]);
       else if (style === 'stone') out.push([bx * 128 + 36, by * 128 + 16, 56, 90]);
       else out.push([bx * 128 + 30, by * 128 + 26, 68, 62]);
@@ -40,7 +44,7 @@ function drawFacade(g: CanvasRenderingContext2D, w: number, h: number, style: Fa
     for (let y = 0; y < h; y += 16) g.fillRect(0, y, w, 1.2);
     for (let y = 0; y < h; y += 32) for (let x = (y / 32) % 2 ? 0 : 32; x < w; x += 64) g.fillRect(x, y, 1.2, 16);
     speckle(g, w, h, 500, ['#e6dfd2', '#f7f3ea'], 0.4);
-    for (const y of [0, 128]) {
+    for (let y = 0; y < h; y += 128) {
       g.fillStyle = 'rgba(255,255,255,.9)';
       g.fillRect(0, y + 112, w, 8);
       g.fillStyle = 'rgba(0,0,0,.12)';
@@ -50,7 +54,8 @@ function drawFacade(g: CanvasRenderingContext2D, w: number, h: number, style: Fa
     speckle(g, w, h, 700, ['#dcd5c9', '#efeae1'], 0.5);
     // rain streaks from the window sills
     g.fillStyle = 'rgba(90,60,40,.06)';
-    for (let i = 0; i < 6; i++) g.fillRect(20 + i * 40, 90, 6, 30 + (i % 3) * 20);
+    for (let y = 0; y < h; y += 128)
+      for (let i = 0; i < w / 40; i++) g.fillRect(20 + i * 40, y + 90, 6, 30 + ((i + y / 128) % 3) * 20);
   }
 
   for (const [x, y, ww, hh] of windows(style)) {
@@ -113,14 +118,58 @@ function drawFacade(g: CanvasRenderingContext2D, w: number, h: number, style: Fa
   }
 }
 
-/** Night map: warm light in about two windows out of three, in the same places as the facade's windows. */
+/** How one window looks at night. */
+export type WindowLight = 'dark' | 'warm' | 'pale' | 'dim' | 'tv' | 'curtained';
+
+/**
+ * Which windows of a facade tile are lit, and how: under half of them, in a mix of warm lamps, dimmer rooms,
+ * the blue of a television and light through drawn curtains. Seeded, so every visit looks the same.
+ */
+export function windowLights(count: number, seed = 7): WindowLight[] {
+  let s = seed;
+  const rnd = () => {
+    s = (s * 16807) % 2147483647;
+    return s / 2147483647;
+  };
+  return Array.from({ length: count }, () => {
+    const r = rnd();
+    if (r < 0.56) return 'dark';
+    if (r < 0.72) return 'warm';
+    if (r < 0.8) return 'pale';
+    if (r < 0.88) return 'dim';
+    if (r < 0.93) return 'tv';
+    return 'curtained';
+  });
+}
+
+/** Night map: light in some of the windows, in the same places as the facade's windows. */
 function drawLit(g: CanvasRenderingContext2D, w: number, h: number, style: FacadeStyle) {
   g.fillStyle = '#000';
   g.fillRect(0, 0, w, h);
-  windows(style).forEach(([x, y, ww, hh], i) => {
-    if (i === 2) return;
-    g.fillStyle = i === 1 ? '#ffd9a0' : '#ffc77a';
+  const all = windows(style);
+  const lights = windowLights(all.length);
+  all.forEach(([x, y, ww, hh], i) => {
+    const light = lights[i];
+    if (light === 'dark') return;
+    if (light === 'tv') {
+      g.fillStyle = '#2c3f66';
+      g.fillRect(x, y, ww, hh);
+      g.fillStyle = '#5f86c4';
+      g.fillRect(x + ww * 0.2, y + hh * 0.35, ww * 0.5, hh * 0.4);
+      return;
+    }
+    const col = { warm: '#ffc77a', pale: '#ffe2b8', dim: '#8a6238', curtained: '#e0904a' }[light];
+    const gr = g.createLinearGradient(0, y, 0, y + hh);
+    gr.addColorStop(0, col);
+    gr.addColorStop(1, light === 'dim' ? '#5a3e22' : '#c98a4a');
+    g.fillStyle = gr;
     g.fillRect(x, y, ww, hh);
+    if (light === 'curtained') {
+      // curtains drawn across, with a bright gap in the middle
+      g.fillStyle = 'rgba(0,0,0,.45)';
+      g.fillRect(x, y, ww * 0.42, hh);
+      g.fillRect(x + ww * 0.58, y, ww * 0.42, hh);
+    }
   });
 }
 
@@ -242,16 +291,16 @@ export function createFacades(kit: Kit, style: FacadeStyle, surface: RoofSurface
   const { canvasTex, speckle } = kit;
   return {
     wall: canvasTex(
-      256,
-      256,
+      BAYS * 128,
+      STOREYS * 128,
       (g, w, h) => {
         drawFacade(g, w, h, style, speckle);
       },
       [1, 1],
     ),
     wallLit: canvasTex(
-      256,
-      256,
+      BAYS * 128,
+      STOREYS * 128,
       (g, w, h) => {
         drawLit(g, w, h, style);
       },

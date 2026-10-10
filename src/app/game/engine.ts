@@ -8,7 +8,7 @@ import { createInput } from './input';
 import { createKit } from './kit';
 import { H } from './layout';
 import { createLighting } from './lighting';
-import { cameraSpot, easeOpen, sightBlocked } from './map/occlusion';
+import { cameraSpot, easeOpen, easeTo, leastTilt, sightBlocked, talkShot } from './map/occlusion';
 import { type Pt, findPath } from './pathfind';
 import { createPedestrians } from './pedestrians';
 import { buildGraph, networks } from './map/road-graph';
@@ -172,9 +172,14 @@ export async function createEngine(
         z > H - r ||
         solids.some((s) => x > s.x0 - r && x < s.x1 + r && z > s.z0 - r && z < s.z1 + r);
 
+  /** How far apart two people stand to talk, in metres. */
+  const TALK_GAP = 2.2;
   // Autopilot: walk a route found around the buildings to the chosen place or person.
   let route: Pt[] | null = null;
   let repathIn = 0;
+  let stuckClock = 1.5;
+  let stuckAt: Pt = { x: 0, z: 0 };
+  let stuckTries = 0;
   function autoSteer(dt: number): Pt {
     const stop = { x: 0, z: 0 };
     const target = svc.autopilot();
@@ -193,6 +198,30 @@ export async function createEngine(
         svc.stopAutopilot();
       });
       return stop;
+    }
+    // stop at talking distance, not on the person's toes
+    if (target.kind === 'npc' && Math.hypot(goal.x - p.x, goal.z - p.z) < TALK_GAP + 0.2) {
+      zone.run(() => {
+        svc.stopAutopilot();
+      });
+      route = null;
+      return stop;
+    }
+    // not getting anywhere (a corner the route cuts too finely): look for a new way, and give up after a few tries
+    stuckClock -= dt;
+    if (stuckClock <= 0) {
+      stuckClock = 1.5;
+      if (Math.hypot(p.x - stuckAt.x, p.z - stuckAt.z) < 0.5 && route) {
+        route = null;
+        if (++stuckTries >= 3) {
+          stuckTries = 0;
+          zone.run(() => {
+            svc.stopAutopilot('blocked');
+          });
+          return stop;
+        }
+      } else stuckTries = 0;
+      stuckAt = { x: p.x, z: p.z };
     }
     repathIn -= dt;
     if (!route || repathIn <= 0) {
@@ -223,11 +252,36 @@ export async function createEngine(
   const CUT_RADIUS = 2.4;
   let sightClock = 0;
   let hidden = false;
-  let hiddenFromUsual = false;
   /** 0 = the usual view from behind, 1 = looking down from above. */
   let tilt = 0;
+  /** How far the camera wants to tilt: just enough to see the player. */
+  let tiltWanted = 0;
+  /** The camera's spot for a tilt (before it is kept out of buildings). Rising, it also moves in, so the street fills more of the view. */
+  const camAt = (x: number, z: number, t: number, zoom: number) => {
+    const l = t * t * (3 - 2 * t);
+    const k = (1 - 0.22 * l) * zoom;
+    return { x, y: (19 + (28 - 19) * l) * k, z: z + (21 + (9 - 21) * l) * k };
+  };
   /** 0 = walking about, 1 = in a conversation (the camera moves in). */
   let talkK = 0;
+  /**
+   * The conversation shot: the middle of the pair, the direction (sx, sz) and distance the camera watches from, and
+   * whether an open spot was found. Kept after the conversation ends so the camera eases back.
+   */
+  const talkView: {
+    who: THREE.Object3D | null;
+    ok: boolean;
+    mx: number;
+    mz: number;
+    sx: number;
+    sz: number;
+    d: number;
+    /** Where the player stands for the conversation. */
+    standX: number;
+    standZ: number;
+  } = { who: null, ok: false, mx: 0, mz: 0, sx: 0, sz: 1, d: 11, standX: 0, standZ: 0 };
+  /** Height of the conversation camera, in metres. */
+  const TALK_CAM_Y = 3.5;
   let holeOpen = 0;
 
   let hourShown = -1;
@@ -245,6 +299,7 @@ export async function createEngine(
   const camT = new THREE.Vector3(),
     camL = new THREE.Vector3(S0.x, 1, S0.z - 2);
   const tmpV = new THREE.Vector3(),
+    tmpV2 = new THREE.Vector3(),
     white = new THREE.Color(1, 1, 1);
   const grey = new THREE.Color(),
     skyT = new THREE.Color(),
@@ -550,18 +605,82 @@ export async function createEngine(
     const tk = talkK * talkK * (3 - 2 * talkK);
     const zoom = svc.zoom() * (1 - 0.45 * tk);
     if (real) {
-      // A building between the camera and the player: tilt towards a view from above, where roofs rarely get in the way.
+      // A building between the camera and the player: tilt up, but only as far as it takes to see over it.
       sightClock -= realDt;
       if (sightClock <= 0) {
         sightClock = 0.2;
         const eye = { x: p.x, y: 1.6, z: p.z };
-        hiddenFromUsual = sightBlocked(real.heightAt, eye, { x: p.x, y: 19 * zoom, z: p.z + 21 * zoom });
+        tiltWanted = leastTilt(real.heightAt, eye, (t) => camAt(p.x, p.z, t, zoom));
         hidden = sightBlocked(real.heightAt, eye, cam.position);
       }
-      tilt = easeOpen(tilt, hiddenFromUsual, realDt, 1.2);
+      tilt = easeTo(tilt, tiltWanted, realDt, 1.2);
     }
-    const lift = tilt * tilt * (3 - 2 * tilt);
-    camT.set(p.x, (19 + (28 - 19) * lift) * zoom, p.z + (21 + (9 - 21) * lift) * zoom);
+    const spot0 = camAt(p.x, p.z, tilt, zoom);
+    camT.set(spot0.x, spot0.y, spot0.z);
+    const partner = talking ? npcs.find((g) => g.userData['P'] === talking.P) : undefined;
+    if (partner) {
+      const gx = p.x - partner.position.x;
+      const gz = p.z - partner.position.z;
+      const gd = Math.hypot(gx, gz) || 1;
+      if (talkView.who !== partner) {
+        talkView.mx = (p.x + partner.position.x) / 2;
+        talkView.mz = (p.z + partner.position.z) / 2;
+        // Choose the shot once per conversation: from the side nearest the usual view, turned a little towards
+        // the player so the person you are talking to is seen three-quarters on, or the nearest open direction.
+        talkView.who = partner;
+        let sx = -gz / gd;
+        let sz = gx / gd;
+        if (sz < 0) {
+          sx = -sx;
+          sz = -sz;
+        }
+        const prefer = Math.atan2(sx + (gx / gd) * 0.55, sz + (gz / gd) * 0.55);
+        const shot = talkShot(real ? real.heightAt : () => 0, { x: talkView.mx, z: talkView.mz }, prefer);
+        talkView.ok = shot !== null;
+        talkView.standX = p.x;
+        talkView.standZ = p.z;
+        if (shot) {
+          const d = Math.hypot(shot.x - talkView.mx, shot.z - talkView.mz);
+          const sx = (shot.x - talkView.mx) / d;
+          const sz = (shot.z - talkView.mz) / d;
+          talkView.d = d;
+          talkView.sx = sx;
+          talkView.sz = sz;
+          // Stage the pair across the view, the player turned a little towards the camera,
+          // so neither hides the other (on the side the player is already on, if there is room).
+          const side = -sz * gx + sx * gz >= 0 ? 1 : -1;
+          for (const sgn of [side, -side]) {
+            const ax = -sz * sgn * 0.85 + sx * 0.5;
+            const az = sx * sgn * 0.85 + sz * 0.5;
+            const al = Math.hypot(ax, az);
+            const tx = partner.position.x + (ax / al) * TALK_GAP;
+            const tz = partner.position.z + (az / al) * TALK_GAP;
+            if (!blocked(tx, tz, 0.5)) {
+              talkView.standX = tx;
+              talkView.standZ = tz;
+              break;
+            }
+          }
+        }
+      }
+      // step to the staged spot
+      const sdx = talkView.standX - p.x;
+      const sdz = talkView.standZ - p.z;
+      const sd = Math.hypot(sdx, sdz);
+      if (sd > 0.02) {
+        const step = Math.min(sd, dt * 2.5);
+        const nx = p.x + (sdx / sd) * step;
+        const nz = p.z + (sdz / sd) * step;
+        if (!blocked(nx, nz, 0.4)) p.set(nx, p.y, nz);
+      }
+      talkView.mx = (p.x + partner.position.x) / 2;
+      talkView.mz = (p.z + partner.position.z) / 2;
+    } else talkView.who = null;
+    const v = talkView;
+    if (tk > 0 && v.ok) {
+      // a low shot of the two of you, close enough to see faces, angled down so you stand above the panel
+      camT.lerp(tmpV.set(v.mx + v.sx * v.d, TALK_CAM_Y, v.mz + v.sz * v.d), tk);
+    }
     if (real) {
       // never let the camera end up inside a building: slide it in towards the player instead
       const spot = cameraSpot(real.heightAt, { x: p.x, y: 1.6, z: p.z }, camT);
@@ -571,10 +690,17 @@ export async function createEngine(
       cam.position.copy(camT);
       camInit = true;
     } else cam.position.lerp(camT, 1 - Math.exp(-dt * 5));
-    const partner = talking ? npcs.find((g) => g.userData['P'] === talking.P) : undefined;
-    // aim a little nearer the camera than the pair, so they sit above the conversation panel
-    if (partner) tmpV.set((p.x + partner.position.x) / 2, 1.4, (p.z + partner.position.z) / 2 + 4.5 * zoom);
-    else tmpV.set(p.x, 1, p.z - 2);
+    // in a conversation, aim just in front of and below the pair, so they sit above the conversation panel
+    tmpV.set(p.x, 1, p.z - 2);
+    if (tk > 0) {
+      if (v.ok) {
+        // look a little below the pair's middle, so they stand above the centre of the screen
+        const near = v.d * 0.09;
+        const down = Math.atan((TALK_CAM_Y - 1.5) / v.d) + 0.14;
+        tmpV2.set(v.mx + v.sx * near, TALK_CAM_Y - (v.d - near) * Math.tan(down), v.mz + v.sz * near);
+      } else tmpV2.set(v.mx, 1.4, v.mz + 4.5 * zoom);
+      tmpV.lerp(tmpV2, tk);
+    }
     camL.lerp(tmpV, 1 - Math.exp(-dt * 6));
     if (partner) {
       // face the person you are talking to, and talk with your free hand

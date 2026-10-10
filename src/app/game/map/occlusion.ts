@@ -27,11 +27,55 @@ export function sightBlocked(heightAt: (x: number, z: number) => number, eye: P3
   return false;
 }
 
-/** Eases the see-through hole towards open (`want` true) or closed, at `speed` per second. Returns the new size 0..1. */
-export function easeOpen(current: number, want: boolean, dt: number, speed = 4): number {
-  const target = want ? 1 : 0;
+/** Moves `current` towards `target` at `speed` per second. */
+export function easeTo(current: number, target: number, dt: number, speed: number): number {
   const step = speed * dt;
   return current < target ? Math.min(target, current + step) : Math.max(target, current - step);
+}
+
+/** Eases the see-through hole towards open (`want` true) or closed, at `speed` per second. Returns the new size 0..1. */
+export function easeOpen(current: number, want: boolean, dt: number, speed = 4): number {
+  return easeTo(current, want ? 1 : 0, dt, speed);
+}
+
+/**
+ * The least the camera has to tilt up (0 = its usual angle, 1 = from high above) to see the player past the
+ * buildings. `camAt` gives the camera's spot for a tilt. Rising only as far as needed keeps the street in view;
+ * if even the highest spot is hidden, the answer is 1 and the see-through hole does the rest.
+ */
+export function leastTilt(
+  heightAt: (x: number, z: number) => number,
+  eye: P3,
+  camAt: (tilt: number) => P3,
+  steps = 5,
+): number {
+  for (let i = 0; i < steps; i++) {
+    const t = i / steps;
+    if (!sightBlocked(heightAt, eye, camAt(t))) return t;
+  }
+  return 1;
+}
+
+/**
+ * A low camera spot for watching a conversation at `mid`: `dist` metres away at height `y`, from the direction
+ * nearest the angle `prefer` (radians, 0 = +z) that stands in the open and sees the pair. Looking along the
+ * street usually works where looking across it cannot. Null if every direction is shut in.
+ */
+export function talkShot(
+  heightAt: (x: number, z: number) => number,
+  mid: { x: number; z: number },
+  prefer: number,
+  dists: readonly number[] = [11, 9.5],
+  y = 3.5,
+): P3 | null {
+  const eye = { x: mid.x, y: 1.6, z: mid.z };
+  for (const step of [0, 1, -1, 2, -2, 3, -3, 4])
+    for (const d of dists) {
+      const a = prefer + (step * Math.PI) / 4;
+      const cam = { x: mid.x + Math.sin(a) * d, y, z: mid.z + Math.cos(a) * d };
+      if (heightAt(cam.x, cam.z) + 1 < y && !sightBlocked(heightAt, eye, cam)) return cam;
+    }
+  return null;
 }
 
 /**
