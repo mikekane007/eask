@@ -75,4 +75,5 @@ export const LILLE: City = {
     { id: 'site', bi: 2, bj: 0, side: 'S', deco: true, label: t('SITE', 'TRAVAUX'), sign: 'CHANTIER' },
   ],
   people: LILLE_PEOPLE,
+  map: { url: 'maps/lille.json' },
 };

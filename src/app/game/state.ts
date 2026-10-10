@@ -12,6 +12,8 @@ export interface GameState {
   minute: number;
   x: number;
   z: number;
+  /** Which real map the saved position belongs to, so a position from another map is never reused. */
+  map?: string;
   good: number;
   total: number;
   best: Partial<Record<string, OutcomeId>>;

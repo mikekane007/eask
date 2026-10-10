@@ -7,3 +7,5 @@ package-lock.json
 src/app/game/people.data.ts
 playwright-report
 test-results
+public/maps
+.cache

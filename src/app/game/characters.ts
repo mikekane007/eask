@@ -135,11 +135,29 @@ export function createCharacters(scene: THREE.Scene, kit: Kit, svc: GameService,
       dress: women,
       wrap: theme.waxPrint && women && n % 2 ? print : null,
     });
+    // Each person paces a short straight stretch of street: from the real map if there is one, else the grid.
     const [axis, k, blk, frac] = P.spot;
-    const lane = roadC(k) + (n % 2 ? 4.2 : -4.2);
-    const a = bMin(blk) + B * 0.15,
-      b = bMin(blk) + B * 0.85;
-    g.userData['path'] = { axis, lane, a, b, t: frac, dir: 1 };
+    const realPeople = svc.realMap()?.anchors.people;
+    let seg: [number, number, number, number];
+    let start = frac;
+    if (realPeople?.length) {
+      seg = realPeople[n % realPeople.length].seg;
+      start = 0.5;
+    } else {
+      const lane = roadC(k) + (n % 2 ? 4.2 : -4.2);
+      const a = bMin(blk) + B * 0.15;
+      const b = bMin(blk) + B * 0.85;
+      seg = axis === 'h' ? [a, lane, b, lane] : [lane, a, lane, b];
+    }
+    g.userData['path'] = {
+      x0: seg[0],
+      z0: seg[1],
+      x1: seg[2],
+      z1: seg[3],
+      len: Math.hypot(seg[2] - seg[0], seg[3] - seg[1]),
+      t: start,
+      dir: 1,
+    };
     const tag = new THREE.Sprite(
       new THREE.SpriteMaterial({
         map: signTex(P.name.toUpperCase(), '#111C17', '#F4EEDC', 512, 140, 56),

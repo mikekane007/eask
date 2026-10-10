@@ -92,14 +92,28 @@ export class AppComponent implements OnDestroy {
     this.canvas = canvas;
 
     void this.zone.runOutsideAngular(async () => {
+      // a city with a real street map needs it downloaded before its world can be built
+      try {
+        await this.zone.run(() => this.svc.loadRealMap());
+      } catch {
+        this.zone.run(() => {
+          this.svc.toast(this.i18n.t('mapFailed'));
+        });
+      }
+      if (this.stale(gen)) return;
       const engine = await createEngine(canvas, this.svc, this.zone, city, this.sound);
-      if (this.destroyed || gen !== this.generation) {
+      if (this.stale(gen)) {
         engine.dispose();
         return;
       }
       this.engine = engine;
       engine.start();
     });
+  }
+
+  /** True once this component is gone or another city has been chosen since `gen` started. */
+  private stale(gen: number): boolean {
+    return this.destroyed || gen !== this.generation;
   }
 
   ngOnDestroy(): void {

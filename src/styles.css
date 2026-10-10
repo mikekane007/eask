@@ -705,3 +705,9 @@ button:focus-visible {
   opacity: 0.45;
   text-decoration: line-through;
 }
+.minimap .credit {
+  margin-top: 4px;
+  font-size: 9px;
+  color: var(--muted);
+  opacity: 0.8;
+}

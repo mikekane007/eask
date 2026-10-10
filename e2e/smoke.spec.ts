@@ -126,3 +126,12 @@ test('each city keeps its own progress, and you can change city from the rules',
   await page.getByRole('button', { name: 'Step out' }).click();
   await expect(page.getByText('Day 1', { exact: true })).toBeVisible();
 });
+
+test('a city with a real street map loads it, shows the credit and starts beside home', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (err) => errors.push(err.message));
+  await play(page, 'lille');
+  await expect(page.getByText('© OpenStreetMap contributors (ODbL)')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your flat' })).toBeVisible();
+  expect(errors).toEqual([]);
+});

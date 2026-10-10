@@ -310,16 +310,6 @@ export function createCity(scene: THREE.Scene, kit: Kit, builders: Builders, cit
     }
   });
 
-  // clouds
-  const clouds: THREE.Sprite[] = [];
-  for (let c = 0; c < 10; c++) {
-    const s = new THREE.Sprite(
-      new THREE.SpriteMaterial({ map: TX['cloud'], transparent: true, depthWrite: false, opacity: 0.85, fog: false }),
-    );
-    s.scale.set(70 + rnd() * 40, 30 + rnd() * 12, 1);
-    s.position.set((rnd() - 0.5) * 400, 90 + rnd() * 30, -120 - rnd() * 160);
-    scene.add(s);
-    clouds.push(s);
-  }
+  const clouds = kit.makeClouds();
   return { solids, markers, beams, smoke, clouds, ground };
 }

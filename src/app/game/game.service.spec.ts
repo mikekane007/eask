@@ -251,6 +251,80 @@ describe('GameService', () => {
     });
   });
 
+  describe('real street maps', () => {
+    const tiny = {
+      name: 'tiny',
+      credit: 'test',
+      origin: { lat: 0, lon: 0 },
+      w: 200,
+      h: 200,
+      roads: [],
+      buildings: [],
+      parks: [],
+      water: [],
+      anchors: {
+        home: { x: 40, z: -30, a: 0 },
+        church: { x: 0, z: 0, a: 0 },
+        chop: { x: -40, z: 30, a: 0 },
+        landmarks: {},
+        people: [],
+      },
+    };
+    const withMap = () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(() => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(tiny) })),
+      );
+    };
+
+    it('starts a new game beside home on the real map', async () => {
+      withMap();
+      const s = makeService('lille');
+      await s.loadRealMap();
+      expect(s.realMap()?.name).toBe('tiny');
+      expect(Math.hypot(s.state().x - 40, s.state().z + 30)).toBeLessThan(4);
+      expect(s.state().map).toBe('tiny');
+    });
+
+    it('puts gold rings where the map says', async () => {
+      withMap();
+      const s = makeService('lille');
+      await s.loadRealMap();
+      const church = s.places().find((p) => p.id === 'church');
+      if (!church) throw new Error('no church');
+      expect(s.markerOf(church)).toEqual({ x: 0, z: 0 });
+    });
+
+    it('keeps a saved position that belongs to this map', async () => {
+      withMap();
+      localStorage.setItem('goandtell:lille', JSON.stringify({ word: 12, x: -10, z: 15, map: 'tiny' }));
+      const s = makeService('lille');
+      await s.loadRealMap();
+      expect([s.state().x, s.state().z]).toEqual([-10, 15]);
+    });
+
+    it('ignores a position saved on a different map or outside this one', async () => {
+      withMap();
+      localStorage.setItem('goandtell:lille', JSON.stringify({ word: 12, x: -10, z: 15 }));
+      const a = makeService('lille');
+      await a.loadRealMap();
+      expect(Math.hypot(a.state().x - 40, a.state().z + 30)).toBeLessThan(4);
+      expect(a.state().word).toBe(12);
+
+      localStorage.setItem('goandtell:lille', JSON.stringify({ word: 12, x: 900, z: 0, map: 'tiny' }));
+      const b = makeService('lille');
+      await b.loadRealMap();
+      expect(Math.abs(b.state().x)).toBeLessThan(100);
+    });
+
+    it('falls back to the built-in grid for a city without a map', async () => {
+      withMap();
+      const s = makeService('accra');
+      await s.loadRealMap();
+      expect(s.realMap()).toBeNull();
+    });
+  });
+
   describe('persistence', () => {
     it('restores progress in a new session', () => {
       svc.startTalk(person('kwame'));

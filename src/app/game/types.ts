@@ -85,4 +85,6 @@ export interface City {
   climate: Climate;
   places: Place[];
   people: Person[];
+  /** A real street map (OpenStreetMap) for this city. Without one, the city uses the built-in street grid. */
+  map?: { url: string };
 }

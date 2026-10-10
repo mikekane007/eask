@@ -5,7 +5,7 @@ import angular from 'angular-eslint';
 import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
-  { ignores: ['dist/**', '.angular/**', 'node_modules/**', 'coverage/**', '.playwright-mcp/**'] },
+  { ignores: ['dist/**', '.cache/**', '.angular/**', 'node_modules/**', 'coverage/**', '.playwright-mcp/**'] },
   {
     files: ['**/*.ts'],
     extends: [
@@ -35,7 +35,7 @@ export default tseslint.config(
   {
     // The 3D engine modules wrap an untyped-ish library; keep the rules that
     // matter for correctness and relax the ones that only add noise there.
-    files: ['src/app/game/{engine,kit,lighting,builders,city,characters,input}.ts'],
+    files: ['src/app/game/{engine,kit,lighting,builders,city,characters,input}.ts', 'src/app/game/map/real-world.ts'],
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/no-unnecessary-condition': 'off',

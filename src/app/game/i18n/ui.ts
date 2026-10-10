@@ -67,6 +67,7 @@ const EN = {
   endAwayCut: '{name} cut the conversation short. Review the feedback and try again another time.',
   endAwayPolite: '{name} thanked you politely and walked on. Review the feedback and try again another time.',
   allWon: 'Everyone on your street has heard the gospel. Well done, good and faithful servant!',
+  mapFailed: 'The street map could not be loaded, so the simple streets are used instead.',
   // Minimap
   mapAria: 'Street map',
   legendReady: 'Ready to talk',
@@ -166,6 +167,7 @@ const FR: Record<UiKey, string> = {
   endAwayPolite:
     '{name} vous a poliment remercié(e) et a poursuivi son chemin. Relisez les remarques et réessayez une autre fois.',
   allWon: 'Tous les gens de votre rue ont entendu l’Évangile. Bien, bon et fidèle serviteur !',
+  mapFailed: 'Le plan des rues n’a pas pu être chargé : les rues simples sont utilisées à la place.',
   mapAria: 'Plan du quartier',
   legendReady: 'Prêt(e) à parler',
   legendReached: 'Rencontré(e)',

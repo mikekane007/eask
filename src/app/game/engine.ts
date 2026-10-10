@@ -6,9 +6,10 @@ import { createCity } from './city';
 import { type GameService, type Near } from './game.service';
 import { createInput } from './input';
 import { createKit } from './kit';
-import { H, markerPos } from './layout';
+import { H } from './layout';
 import { createLighting } from './lighting';
 import { createPedestrians } from './pedestrians';
+import { createRealWorld } from './map/real-world';
 import { createTraffic } from './traffic';
 import type { SoundService } from './sound.service';
 import { createWeatherFx } from './weather-fx';
@@ -73,11 +74,17 @@ export async function createEngine(
   const { skyU, sky, LT, CUR, setTimeTarget, snapLight } = lighting;
   const fx = createWeatherFx(scene);
   const builders = createBuilders(scene, kit, city.theme);
-  const world = createCity(scene, kit, builders, city);
-  const { solids, markers, beams, smoke, clouds, ground } = world;
+  // A city with a real street map is built from that map; otherwise from the built-in grid.
+  const mapData = svc.realMap();
+  const real = mapData ? createRealWorld(scene, kit, city.theme, city, mapData, builders.facadeMats) : null;
+  const grid = real ? null : createCity(scene, kit, builders, city);
+  const world = real ?? grid;
+  if (!world) throw new Error('no world');
+  const { markers, beams, smoke, clouds, ground } = world;
   const { facadeMats, lampGlows } = builders;
-  const traffic = createTraffic(scene, kit, city.theme);
-  const crowd = createPedestrians(scene, kit, city.theme);
+  // Traffic and the crowd follow the grid's straight streets; for real maps they come with the road network.
+  const traffic = grid ? createTraffic(scene, kit, city.theme) : null;
+  const crowd = grid ? createPedestrians(scene, kit, city.theme) : null;
   const { player, npcs, S0 } = createCharacters(scene, kit, svc, city);
   const input = createInput(canvas, svc, zone);
   const { keys } = input;
@@ -97,19 +104,22 @@ export async function createEngine(
   };
   addEventListener('resize', resize);
   resize();
+  const solids = grid?.solids ?? [];
   const blocked = (x: number, z: number, r: number) =>
-    x < -H + r ||
-    x > H - r ||
-    z < -H + r ||
-    z > H - r ||
-    solids.some((s) => x > s.x0 - r && x < s.x1 + r && z > s.z0 - r && z < s.z1 + r);
+    real
+      ? real.blocked(x, z, r)
+      : x < -H + r ||
+        x > H - r ||
+        z < -H + r ||
+        z > H - r ||
+        solids.some((s) => x > s.x0 - r && x < s.x1 + r && z > s.z0 - r && z < s.z1 + r);
 
   let hourShown = -1;
   let lastStep = 0;
   let lastHour = svc.state().hour;
   let audioClock = 0;
   const churchPlace = city.places.find((pl) => pl.id === 'church');
-  const churchAt = churchPlace ? markerPos(churchPlace) : null;
+  const churchAt = churchPlace ? svc.markerOf(churchPlace) : null;
   let running = false,
     raf = 0,
     last = performance.now(),
@@ -203,7 +213,7 @@ export async function createEngine(
       let nextNear: Near | null = null;
       for (const L of city.places) {
         if (!L.deco) {
-          const m = markerPos(L);
+          const m = svc.markerOf(L);
           if (Math.hypot(p.x - m.x, p.z - m.z) < 2.6) {
             nextNear = { kind: 'place', ref: L };
             break;
@@ -233,7 +243,7 @@ export async function createEngine(
         arms = g.userData['arms'] as THREE.Group[];
       const close = Math.hypot(p.x - g.position.x, p.z - g.position.z) < 5;
       if (!close && !(talking && talking.P === P)) {
-        u.t += (u.dir * dt * 1.6) / (u.b - u.a);
+        u.t += (u.dir * dt * 1.6) / u.len;
         if (u.t > 1) {
           u.t = 1;
           u.dir = -1;
@@ -242,14 +252,8 @@ export async function createEngine(
           u.t = 0;
           u.dir = 1;
         }
-        const s = u.a + (u.b - u.a) * u.t;
-        if (u.axis === 'h') {
-          g.position.set(s, 0, u.lane);
-          g.rotation.y = u.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
-        } else {
-          g.position.set(u.lane, 0, s);
-          g.rotation.y = u.dir > 0 ? 0 : Math.PI;
-        }
+        g.position.set(u.x0 + (u.x1 - u.x0) * u.t, 0, u.z0 + (u.z1 - u.z0) * u.t);
+        g.rotation.y = Math.atan2((u.x1 - u.x0) * u.dir, (u.z1 - u.z0) * u.dir);
         const sw = Math.sin(now / 120 + i) * 0.5;
         legs[0].rotation.x = sw;
         legs[1].rotation.x = -sw;
@@ -323,6 +327,7 @@ export async function createEngine(
     sun.position.set(p.x + CUR.sunP.x, CUR.sunP.y, p.z + CUR.sunP.z);
     sun.target.position.set(p.x, 0, p.z);
     const nf = CUR.night;
+    real?.setNight(nf);
     facadeMats.forEach((m) => {
       m.emissiveIntensity = nf * (m.userData.glass ? 0.35 : 1.1);
     });
@@ -336,14 +341,14 @@ export async function createEngine(
     ground.material.color.setScalar(1 - 0.28 * wx.rain);
     fx.update(dt, p, nf);
     // Traffic: lights run on play time; vehicles slow down in bad weather and stop for the player.
-    traffic.update(
+    traffic?.update(
       dt,
       now / 1000,
       st.hour + st.minute / 60,
       svc.playing() ? p : null,
       Math.max(0.5, 1 - 0.2 * wx.rain - 0.25 * wx.fog),
     );
-    crowd.update(dt, st.hour + st.minute / 60, wx.rain);
+    crowd?.update(dt, st.hour + st.minute / 60, wx.rain);
 
     // Sound: the ambient mix a few times a second, and the church bell on the hour.
     audioClock += realDt;
@@ -354,8 +359,8 @@ export async function createEngine(
             hour: st.hour + st.minute / 60,
             rain: wx.rain,
             fog: wx.fog,
-            trafficNear: traffic.nearCount(p, 55),
-            crowdNear: crowd.nearCount(p, 40),
+            trafficNear: traffic?.nearCount(p, 55) ?? 0,
+            crowdNear: crowd?.nearCount(p, 40) ?? 0,
           },
           audioClock,
         );
@@ -374,6 +379,11 @@ export async function createEngine(
     camL.lerp(tmpV.set(p.x, 1, p.z - 2), 1 - Math.exp(-dt * 6));
     cam.lookAt(camL);
     sky.position.copy(cam.position);
+    if (real) {
+      // keep buildings from hiding the player: cut a see-through tunnel from the camera to them
+      real.cut.uCam.value.copy(cam.position);
+      real.cut.uTarget.value.set(p.x, 1.3, p.z);
+    }
     renderer.render(scene, cam);
     raf = requestAnimationFrame(frame);
   }

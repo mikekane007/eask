@@ -2,6 +2,8 @@ import { Injectable, NgZone, computed, inject, signal } from '@angular/core';
 import { CITIES, getCity } from './cities';
 import { I18n } from './i18n/i18n.service';
 import { markerPos } from './layout';
+import { loadMap } from './map/load';
+import type { MapData } from './map/types';
 import { type Weather, weatherAt } from './weather';
 import { FRESH, type GameState, OUTCOMES, type OutcomeId } from './state';
 import type { Answer, Person, Place, PlaceOption, Quality } from './types';
@@ -57,6 +59,8 @@ export class GameService {
   readonly places = computed(() => this.city()?.places ?? []);
 
   readonly state = signal<GameState>(freshState());
+  /** The real street map of the current city, once loaded (null for cities that use the built-in grid). */
+  readonly realMap = signal<MapData | null>(null);
   /** The current weather, worked out from the city, the day and the hour. */
   readonly weather = computed<Weather>(() => {
     const c = this.city();
@@ -102,10 +106,35 @@ export class GameService {
     return this.places().find((p) => p.id === 'home');
   }
 
+  /** Where a place's gold ring stands: on the real map if there is one, otherwise on the built-in grid. */
+  markerOf(L: Place): { x: number; z: number } {
+    const anchors = this.realMap()?.anchors;
+    const a = anchors && (L.id === 'home' || L.id === 'church' || L.id === 'chop') ? anchors[L.id] : null;
+    return a ? { x: a.x, z: a.z } : markerPos(L);
+  }
+
   private spawn(): { x: number; z: number } {
     const h = this.homePlace();
-    const m = h ? markerPos(h) : { x: 0, z: 0 };
-    return { x: m.x + 1.5, z: m.z };
+    const m = h ? this.markerOf(h) : { x: 0, z: 0 };
+    const a = this.realMap()?.anchors.home;
+    // beside the gold ring: along the street on a real map, to the side on the grid
+    return a ? { x: m.x + Math.sin(a.a) * 2.5, z: m.z + Math.cos(a.a) * 2.5 } : { x: m.x + 1.5, z: m.z };
+  }
+
+  /** Downloads the real street map for the current city, if it has one, and puts a new player beside home. */
+  async loadRealMap(): Promise<void> {
+    const url = this.city()?.map?.url;
+    if (!url) {
+      this.realMap.set(null);
+      return;
+    }
+    const map = await loadMap(url);
+    this.realMap.set(map);
+    const s = this.state();
+    // A new game, or a position saved on another map (or off this one), starts beside home.
+    const stale = !this.hasSave() || s.map !== map.name || Math.abs(s.x) > map.w / 2 || Math.abs(s.z) > map.h / 2;
+    const sp = this.spawn();
+    this.state.update((cur) => ({ ...cur, map: map.name, ...(stale ? { x: sp.x, z: sp.z } : {}) }));
   }
 
   private readSave(cityId: string): Partial<GameState> | null {
@@ -130,6 +159,7 @@ export class GameService {
     const city = getCity(id);
     if (!city) return;
     this.cityId.set(id);
+    this.realMap.set(null);
     const raw = this.readSave(id);
     const s: GameState = { ...freshState(), ...raw };
     if (!raw || (!s.x && !s.z)) {
@@ -155,6 +185,7 @@ export class GameService {
     this.goalsOpen.set(false);
     this.joy.set(null);
     this.cityId.set(null);
+    this.realMap.set(null);
   }
 
   save(): void {
@@ -243,7 +274,7 @@ export class GameService {
     this.state.update((s) => this.passHours({ ...s, body: 45 }, 10));
     const h = this.homePlace();
     if (h) {
-      const m = markerPos(h);
+      const m = this.markerOf(h);
       this.teleport(m.x, m.z);
     }
     this.toast(this.i18n.t('fainted'));

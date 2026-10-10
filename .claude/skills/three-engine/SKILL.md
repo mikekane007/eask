@@ -71,3 +71,10 @@ button or by editing the saved state) when touching lights or emissive materials
   the pure `sound-mix.ts` (tested, with a total-level budget so a storm plus a crowd cannot clip). The audio context is only
   created inside a user gesture; until then every call is a quiet no-op. Update the mix a few times a second, never per frame.
   Check it headlessly by reading the gain values from `window.ng.getComponent(root).sound.graph`.
+- 2026-10-10: Cities may have a real OpenStreetMap map (ADR 0006). `engine.ts` builds `createRealWorld` when `svc.realMap()` is set,
+  else `createCity` (the grid). Traffic and the crowd are grid-only for now (they are `null` on real maps). To add a city map run
+  `node tools/osm/build-map.mjs <name> <south> <west> <north> <east>` then `node tools/osm/preview.mjs <name>` to check where the
+  anchors landed. Keep the area to roughly 600 m across and under 200 KB. Positions saved on one map are ignored on another
+  (`GameState.map`).
+- 2026-10-10: Merged building meshes cannot be faded per building, so `real-world.ts` injects a world-space cut-away into the wall
+  and roof materials (`onBeforeCompile`). New materials for tall things on a real map should call `addCutaway` too.

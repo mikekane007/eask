@@ -16,8 +16,8 @@ Legend: ✅ done · 🔄 in progress · ⏳ planned · ⏸ waiting on owner
 
 ## Phase 2: A real place
 
-- 🔄 2.1 Pilot: a real Lille neighbourhood from OpenStreetMap (streets and building footprints), loaded on demand
-- ⏳ 2.2 Chunked world: build only what is near the player, reuse meshes, level of detail
+- ✅ 2.1 Pilot: a real Lille neighbourhood from OpenStreetMap (streets and building footprints), loaded on demand
+- 🔄 2.2 Road network on real maps: traffic and the crowd on real streets; chunking only if needed
 - ⏳ 2.3 Roll out to Paris and Douai; Accra if good map data exists
 
 ## Phase 3: A real person's life
