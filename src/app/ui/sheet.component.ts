@@ -1,8 +1,9 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { GameService, type Talk } from '../game/game.service';
 import { I18n } from '../game/i18n/i18n.service';
 import { SoundService } from '../game/sound.service';
 import { OUTCOMES, VERDICT_KEY } from '../game/state';
+import { MIN_WORDS, wordCount } from '../game/typed-answer';
 import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types';
 
 @Component({
@@ -28,13 +29,37 @@ import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types'
                   </div>
                 </div>
                 <div class="bubble">{{ i18n.tr(t.P.rounds[t.round].q) }}</div>
-                <div class="opts">
-                  @for (a of t.choices; track $index; let i = $index) {
-                    <button class="opt" [id]="'ans-' + t.round + '-' + i" (click)="pick(a)">
-                      <span>{{ i18n.tr(a[0]) }}</span>
-                    </button>
+                @if (isTyped(t)) {
+                  <div class="typed">
+                    <input
+                      #reply
+                      type="text"
+                      class="reply"
+                      autocomplete="off"
+                      [attr.aria-label]="i18n.t('typeHint')"
+                      [placeholder]="i18n.t('typeHint')"
+                      [value]="draft()"
+                      (input)="draft.set(reply.value)"
+                      (keydown.enter)="send()"
+                    />
+                    <button class="go" [disabled]="!canSend()" (click)="send()">{{ i18n.t('typeSend') }}</button>
+                  </div>
+                  @if (draft() && !canSend()) {
+                    <p class="why">{{ i18n.t('typeShort') }}</p>
                   }
-                </div>
+                  <button class="linkbtn" (click)="choosing.set(roundKey(t))">{{ i18n.t('typeInstead') }}</button>
+                } @else {
+                  <div class="opts">
+                    @for (a of t.choices; track $index; let i = $index) {
+                      <button class="opt" [id]="'ans-' + t.round + '-' + i" (click)="pick(a)">
+                        <span>{{ i18n.tr(a[0]) }}</span>
+                      </button>
+                    }
+                  </div>
+                  @if (t.P.rounds[t.round].typed) {
+                    <button class="linkbtn" (click)="choosing.set('')">{{ i18n.t('typeOwn') }}</button>
+                  }
+                }
               }
               @case ('feedback') {
                 <div class="who">
@@ -147,8 +172,24 @@ export class SheetComponent {
   private readonly sound = inject(SoundService);
 
   pick(a: Answer): void {
+    this.choosing.set('');
     this.svc.answer(a);
     this.sound.verdict(a[1]);
+  }
+  /** What is being typed, and which question the player chose to answer from the list instead. */
+  readonly draft = signal('');
+  readonly choosing = signal('');
+  roundKey = (t: Talk) => `${t.P.id}:${t.round}`;
+  isTyped = (t: Talk) => !!t.P.rounds[t.round].typed && this.choosing() !== this.roundKey(t);
+  canSend = () => wordCount(this.draft()) >= MIN_WORDS;
+  send(): void {
+    const t = this.svc.talking();
+    if (!t || !this.canSend()) return;
+    const text = this.draft();
+    this.draft.set('');
+    this.svc.answerTyped(text);
+    const q = this.svc.talking()?.log.at(-1);
+    if (q) this.sound.verdict(q);
   }
   readonly verdictKey = VERDICT_KEY;
   readonly outcomes = OUTCOMES;

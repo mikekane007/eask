@@ -1,6 +1,7 @@
 import type { City } from '../types';
 import { CHURCH_OPTS, HOME_OPTS, HOURS_CHURCH, HOURS_EAT, HOURS_HOME, SKIN, mealOpts, t } from './common';
 import { DOUAI_PEOPLE } from './douai.people';
+import { withTyped } from './typed';
 
 export const DOUAI: City = {
   id: 'douai',
@@ -74,6 +75,6 @@ export const DOUAI: City = {
     { id: 'tech', bi: 4, bj: 2, side: 'W', deco: true, label: t('BELFRY', 'BEFFROI'), sign: 'BEFFROI' },
     { id: 'site', bi: 1, bj: 1, side: 'S', deco: true, label: t('SITE', 'TRAVAUX'), sign: 'CHANTIER' },
   ],
-  people: DOUAI_PEOPLE,
+  people: withTyped(DOUAI_PEOPLE),
   map: { url: 'maps/douai.json' },
 };

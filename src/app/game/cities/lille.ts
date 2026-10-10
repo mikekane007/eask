@@ -1,6 +1,7 @@
 import type { City } from '../types';
 import { CHURCH_OPTS, HOME_OPTS, HOURS_CHURCH, HOURS_EAT, HOURS_HOME, SKIN, mealOpts, t } from './common';
 import { LILLE_PEOPLE } from './lille.people';
+import { withTyped } from './typed';
 
 export const LILLE: City = {
   id: 'lille',
@@ -74,6 +75,6 @@ export const LILLE: City = {
     { id: 'tech', bi: 1, bj: 3, side: 'N', deco: true, label: t('TOWER', 'TOUR'), sign: 'EURALILLE' },
     { id: 'site', bi: 2, bj: 0, side: 'S', deco: true, label: t('SITE', 'TRAVAUX'), sign: 'CHANTIER' },
   ],
-  people: LILLE_PEOPLE,
+  people: withTyped(LILLE_PEOPLE),
   map: { url: 'maps/lille.json' },
 };

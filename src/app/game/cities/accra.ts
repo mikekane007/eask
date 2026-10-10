@@ -1,5 +1,6 @@
 import type { City } from '../types';
 import { ACCRA_PEOPLE } from './accra.people';
+import { withTyped } from './typed';
 import { CHURCH_OPTS, HOME_OPTS, HOURS_CHURCH, HOURS_EAT, HOURS_HOME, SKIN, mealOpts, t } from './common';
 
 export const ACCRA: City = {
@@ -71,6 +72,6 @@ export const ACCRA: City = {
     { id: 'tech', bi: 3, bj: 3, side: 'N', deco: true, label: t('TECH', 'TECH'), sign: 'TECH HUB' },
     { id: 'site', bi: 3, bj: 1, side: 'S', deco: true, label: t('SITE', 'TRAVAUX'), sign: 'SITE' },
   ],
-  people: ACCRA_PEOPLE,
+  people: withTyped(ACCRA_PEOPLE),
   map: { url: 'maps/accra.json' },
 };

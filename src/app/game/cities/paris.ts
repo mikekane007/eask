@@ -1,6 +1,7 @@
 import type { City } from '../types';
 import { CHURCH_OPTS, HOME_OPTS, HOURS_CHURCH, HOURS_EAT, HOURS_HOME, SKIN, mealOpts, t } from './common';
 import { PARIS_PEOPLE } from './paris.people';
+import { withTyped } from './typed';
 
 export const PARIS: City = {
   id: 'paris',
@@ -74,6 +75,6 @@ export const PARIS: City = {
     { id: 'tech', bi: 2, bj: 4, side: 'N', deco: true, label: t('TOWER', 'TOUR'), sign: 'LA DÉFENSE' },
     { id: 'site', bi: 3, bj: 3, side: 'N', deco: true, label: t('SITE', 'TRAVAUX'), sign: 'CHANTIER' },
   ],
-  people: PARIS_PEOPLE,
+  people: withTyped(PARIS_PEOPLE),
   map: { url: 'maps/paris.json' },
 };

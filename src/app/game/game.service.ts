@@ -2,6 +2,8 @@ import { Injectable, NgZone, computed, inject, signal } from '@angular/core';
 import { type Avatar, DEFAULT_AVATAR, parseAvatar } from './avatar';
 import { CITIES, getCity } from './cities';
 import { I18n } from './i18n/i18n.service';
+import { UI } from './i18n/ui';
+import { gradeReply } from './typed-answer';
 import { markerPos } from './layout';
 import { loadMap } from './map/load';
 import type { MapData } from './map/types';
@@ -447,6 +449,21 @@ export class GameService {
     }));
     this.talking.set({ ...t, open, log: [...t.log, q], phase: 'feedback', picked: a });
     this.save();
+  }
+
+  /**
+   * The player typed their own reply. It is judged by the ideas it carries; the feedback then explains in general
+   * terms (the written answers describe other wordings) and a wiser reply is shown when it was not wise.
+   */
+  answerTyped(text: string): void {
+    const t = this.talking();
+    if (!t) return;
+    const round = t.P.rounds[t.round];
+    if (!round.typed) return;
+    const q = gradeReply(text, round.typed);
+    const best = round.a.find((x) => x[1] === 'good') ?? round.a[0];
+    const key = q === 'good' ? 'typedGood' : q === 'ok' ? 'typedOk' : 'typedBad';
+    this.answer([text.trim(), q, { en: UI.en[key], fr: UI.fr[key] }, best[3]]);
   }
 
   isLastRound(t: Talk): boolean {

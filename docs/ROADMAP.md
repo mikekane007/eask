@@ -35,6 +35,14 @@ Legend: ✅ done · 🔄 in progress · ⏳ planned · ⏸ waiting on owner
 - ⏳ 4.3 Landmarks per city (belfry, tower, Braderie stalls)
 - ✅ 4.4 Quality settings (low, medium, high) plus Auto, which lowers the detail when the frame rate cannot be held
 
+## Phase 5: Friends' feedback (2026-10-10)
+
+- ✅ 5.1 Lille café renamed to "La Majesté Cafe and Pastries" (the church was already "La Source Church")
+- ✅ 5.2 Choose your character: guy or lady, skin, hair, clothes (kept on the device, shared by every city)
+- ✅ 5.3 Autopilot: walk to the church, café, home or a person around the buildings (grid path finding, `pathfind.ts`)
+- ✅ 5.4 Typed replies on one question per person, judged by ideas in both languages (`typed-answer.ts`, content in `cities/typed.ts`, draft for review)
+- ⏳ 5.5 Multiplayer with Firebase: room codes, see each other, meet a group together and take turns. Needs the owner to create the Firebase project; networking sits behind one small interface so the provider can change.
+
 ## Standing rules
 
 - No crime, violence or chaos; realism means everyday life.

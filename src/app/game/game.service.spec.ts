@@ -440,3 +440,42 @@ describe('autopilot', () => {
     expect(svc.autopilot()).toBeNull();
   });
 });
+
+describe('typed replies', () => {
+  const kwame = () => person('kwame');
+
+  function talkAtTypedRound(svc: GameService): void {
+    svc.startTalk(kwame());
+    answerWith(svc, 'good');
+    svc.next();
+  }
+
+  it('judges what you type by its ideas and scores it like a chosen answer', () => {
+    const svc = makeService();
+    talkAtTypedRound(svc);
+    const before = svc.state();
+    svc.answerTyped('The tomb was empty and many witnesses saw Him. Will you look at the evidence with me?');
+    const t = svc.talking();
+    expect(t?.phase).toBe('feedback');
+    expect(t?.picked?.[1]).toBe('good');
+    expect(svc.state().total).toBe(before.total + 1);
+    expect(svc.state().good).toBe(before.good + 1);
+    expect(t?.open).toBeGreaterThan(50);
+  });
+
+  it('shows what was typed and a wiser reply when it missed', () => {
+    const svc = makeService();
+    talkAtTypedRound(svc);
+    svc.answerTyped('I really like football and the weather today');
+    const t = svc.talking();
+    expect(t?.picked?.[1]).toBe('bad');
+    expect(t?.picked?.[0]).toBe('I really like football and the weather today');
+  });
+
+  it('does nothing on a round that is not typed', () => {
+    const svc = makeService();
+    svc.startTalk(kwame());
+    svc.answerTyped('The tomb was empty and many witnesses saw Him.');
+    expect(svc.talking()?.phase).toBe('question');
+  });
+});

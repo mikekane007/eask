@@ -9,9 +9,24 @@ export type Quality = 'good' | 'ok' | 'bad';
 /** [what you say, quality, why that was right or wrong, scripture reference in English (translated on display)] */
 export type Answer = [L10n, Quality, L10n, string];
 
+/** One thing a good reply says. Any one of the words (or the start of a word) in either language counts. */
+export interface Idea {
+  en: string[];
+  fr: string[];
+}
+
+/** How a typed reply is judged: by the ideas it contains, not by exact wording. */
+export interface Typed {
+  ideas: Idea[];
+  /** How many ideas make a wise reply. Defaults to two (or all of them when there are fewer). */
+  need?: number;
+}
+
 export interface Round {
   q: L10n;
   a: Answer[];
+  /** When set, this round can be answered by typing as well as by choosing. The three answers still give the feedback. */
+  typed?: Typed;
 }
 
 export interface Person {
