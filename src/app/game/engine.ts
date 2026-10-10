@@ -8,6 +8,7 @@ import { createInput } from './input';
 import { createKit } from './kit';
 import { H, markerPos } from './layout';
 import { createLighting } from './lighting';
+import { createPedestrians } from './pedestrians';
 import { createTraffic } from './traffic';
 import { createWeatherFx } from './weather-fx';
 import type { City } from './types';
@@ -74,6 +75,7 @@ export async function createEngine(
   const { solids, markers, beams, smoke, clouds, ground } = world;
   const { facadeMats, lampGlows } = builders;
   const traffic = createTraffic(scene, kit, city.theme);
+  const crowd = createPedestrians(scene, kit, city.theme);
   const { player, npcs, S0 } = createCharacters(scene, kit, svc, city);
   const input = createInput(canvas, svc, zone);
   const { keys } = input;
@@ -329,6 +331,7 @@ export async function createEngine(
       svc.playing() ? p : null,
       Math.max(0.5, 1 - 0.2 * wx.rain - 0.25 * wx.fog),
     );
+    crowd.update(dt, st.hour + st.minute / 60, wx.rain);
     camT.set(p.x, 19 * svc.zoom(), p.z + 21 * svc.zoom());
     if (!camInit) {
       cam.position.copy(camT);

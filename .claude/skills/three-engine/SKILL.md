@@ -63,3 +63,7 @@ button or by editing the saved state) when touching lights or emissive materials
   `traffic.ts` (vehicles, lanes, instanced signal lamps). Vehicles follow `desiredSpeed` each frame. Keep rules in
   the pure file. Conversation people stand at 4.2 m from a road centre (outside the lanes) so cars never drive
   through them. Instance colours (`setColorAt`) are NOT converted for the renderer: call `.convertSRGBToLinear()`.
+- 2026-10-10: The background crowd (`pedestrians.ts`, rules in `crowd-logic.ts`) is four `InstancedMesh`es: torso, head and
+  two legs, so about 36 people cost four draw calls. They walk rectangular pavement loops inside each block, follow
+  daily routines and go indoors in rain. They are scenery only: named people (conversations) are separate objects.
+  Hidden people are scaled to zero, not removed. Never create per-person meshes for the crowd.

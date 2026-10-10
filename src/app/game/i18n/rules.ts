@@ -53,7 +53,7 @@ const EN: RulesDoc = {
         '**{church}** (06:00–21:00): Bible study (+12 Word, 2h, −5 energy). Evangelism training (needs Word 20; +20 Word, 3h, −8 energy). Prayer meeting (+10 energy, 1h).',
         '**{eat}** (06:00–23:00): a meal gives +25 or +40 energy, 1 hour each.',
         '**{home}**: sleep to refill energy and start again at 07:00. Sleeping after 07:00 moves to the next day.',
-        'The other buildings are scenery.',
+        'The other buildings are scenery. Ordinary people walk the pavements on daily routines (commuters, shoppers, students, night owls) and go indoors when it rains.',
       ],
     },
     {
@@ -133,7 +133,7 @@ const FR: RulesDoc = {
         '**{church}** (6 h – 21 h) : étude biblique (+12 Parole, 2 h, −5 énergie). Formation à l’évangélisation (Parole 20 requise ; +20 Parole, 3 h, −8 énergie). Réunion de prière (+10 énergie, 1 h).',
         '**{eat}** (6 h – 23 h) : un repas donne +25 ou +40 d’énergie, 1 heure chacun.',
         '**{home}** : dormez pour refaire le plein d’énergie et repartir à 07 h 00. Dormir après 07 h 00 fait passer au jour suivant.',
-        'Les autres bâtiments sont du décor.',
+        'Les autres bâtiments sont du décor. Des gens ordinaires marchent sur les trottoirs selon leurs habitudes (travailleurs, clients, étudiants, noctambules) et rentrent à l’abri quand il pleut.',
       ],
     },
     {

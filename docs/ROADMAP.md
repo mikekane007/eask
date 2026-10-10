@@ -11,8 +11,8 @@ Legend: ✅ done · 🔄 in progress · ⏳ planned · ⏸ waiting on owner
 - ✅ 1.1 Ambient clock: time passes while you walk (about 3 real minutes per game hour); HH:MM on the HUD
 - ✅ 1.2 Weather: clear, cloudy, rain, fog, by day and city; rain particles, light and fog change
 - ✅ 1.3 Traffic: cars and buses on every road, traffic lights, vehicles yield to the player
-- 🔄 1.4 Pedestrians: a crowd with daily routines (commute, lunch, evening, night), drawn with instancing
-- ⏳ 1.5 Sound: generated in the browser (no audio files): ambience, rain, traffic, birds, footsteps, bells, mute
+- ✅ 1.4 Pedestrians: a crowd with daily routines (commute, lunch, evening, night), drawn with instancing
+- 🔄 1.5 Sound: generated in the browser (no audio files): ambience, rain, traffic, birds, footsteps, bells, mute
 
 ## Phase 2: A real place
 
@@ -29,6 +29,7 @@ Legend: ✅ done · 🔄 in progress · ⏳ planned · ⏸ waiting on owner
 
 ## Phase 4: Look and polish
 
+- ⏳ 4.0 Camera: fade or hide buildings that hide the player
 - ⏳ 4.1 Better characters and animations (walk, wave, sit); glTF only if the size budget allows
 - ⏳ 4.2 Shops and homes you can walk into
 - ⏳ 4.3 Landmarks per city (belfry, tower, Braderie stalls)
