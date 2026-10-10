@@ -271,7 +271,7 @@ export async function createEngine(canvas: HTMLCanvasElement, svc: GameService, 
     const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g);
     mesh(new THREE.CylinderGeometry(.28 * s, .4 * s, 3 * s, 8), M(0x5e4632), 0, 1.5 * s, 0, g);
     const cols = [0x2f6b2a, 0x3a7d32, 0x285d24];
-    for (let i = 0; i < 4; i++) { const r = (1.4 + rnd() * .8) * s; mesh(new THREE.IcosahedronGeometry(r, 1), new THREE.MeshLambertMaterial({ color: lin(cols[i % 3]), flatShading: true }), (rnd() - .5) * 2 * s, 3.4 * s + rnd() * 1.2 * s, (rnd() - .5) * 2 * s, g); }
+    for (let i = 0; i < 4; i++) { const r = (1.4 + rnd() * .8) * s; mesh(new THREE.IcosahedronGeometry(r, 1), new THREE.MeshLambertMaterial({ color: lin(cols[i % 3]), flatShading: true } as any), (rnd() - .5) * 2 * s, 3.4 * s + rnd() * 1.2 * s, (rnd() - .5) * 2 * s, g); }
   }
   function umbrella(x: number, z: number, cols: string[], parent?: THREE.Object3D) {
     const g = new THREE.Group(); g.position.set(x, 0, z); (parent || scene).add(g);
