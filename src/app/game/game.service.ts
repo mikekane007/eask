@@ -41,6 +41,14 @@ export class GameService {
   readonly toastMsg = signal<string | null>(null);
   readonly toastFading = signal(false);
   readonly zoom = signal(1);
+  readonly mapOpen = signal(true);
+  /** Live positions for the minimap. Plain object on purpose: it changes every frame and must not trigger change detection. */
+  readonly live = {
+    x: 0,
+    z: 0,
+    rot: 0,
+    npcs: PEOPLE.map((P) => ({ id: P.id, x: 0, z: 0, on: false })),
+  };
   readonly joy = signal<{ x: number; y: number; dx: number; dy: number } | null>(null);
 
   /** Set by the 3D engine so the service can move the player. */

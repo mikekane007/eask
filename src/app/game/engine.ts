@@ -225,6 +225,10 @@ export async function createEngine(canvas: HTMLCanvasElement, svc: GameService, 
         arms[1].rotation.x *= 0.85;
       }
       const on = st.word >= P.req && st.best[P.id] !== 'open';
+      const ln = svc.live.npcs[i];
+      ln.x = g.position.x;
+      ln.z = g.position.z;
+      ln.on = on;
       const ring = g.userData['ring'] as THREE.Mesh,
         bub = g.userData['bub'] as THREE.Sprite;
       ring.visible = on;
@@ -232,6 +236,9 @@ export async function createEngine(canvas: HTMLCanvasElement, svc: GameService, 
       (ring.material as THREE.Material).opacity = 0.5 + 0.4 * Math.sin(now / 280 + i);
       bub.position.y = 4.7 + Math.sin(now / 350 + i) * 0.15;
     });
+    svc.live.x = p.x;
+    svc.live.z = p.z;
+    svc.live.rot = player.rotation.y;
     markers.forEach((m, i) => {
       (m.material as THREE.Material).opacity = 0.55 + 0.35 * Math.sin(now / 300 + i);
     });

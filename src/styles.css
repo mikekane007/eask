@@ -466,3 +466,46 @@ button:focus-visible {
 [hidden] {
   display: none !important;
 }
+.minimap {
+  position: fixed;
+  right: 64px;
+  top: calc(env(safe-area-inset-top, 0px) + 64px);
+  z-index: 4;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px;
+  pointer-events: none;
+}
+.minimap canvas {
+  display: block;
+  width: 176px;
+  height: 176px;
+  border-radius: 8px;
+}
+.minimap .legend {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 5px;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.minimap .legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 3px;
+  vertical-align: middle;
+}
+@media (max-width: 480px) {
+  .minimap canvas {
+    width: 132px;
+    height: 132px;
+  }
+  .minimap .legend {
+    display: none;
+  }
+}

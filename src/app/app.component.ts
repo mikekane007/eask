@@ -4,16 +4,18 @@ import { GameService } from './game/game.service';
 import { GoalsComponent } from './ui/goals.component';
 import { HudComponent } from './ui/hud.component';
 import { IntroComponent } from './ui/intro.component';
+import { MinimapComponent } from './ui/minimap.component';
 import { SheetComponent } from './ui/sheet.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [HudComponent, GoalsComponent, SheetComponent, IntroComponent],
+  imports: [HudComponent, GoalsComponent, SheetComponent, IntroComponent, MinimapComponent],
   template: `
     <canvas #c id="c"></canvas>
     <app-hud />
     <app-goals />
+    <app-minimap />
     <app-sheet />
     @if (svc.toastMsg(); as msg) {
       <div class="toast" [style.opacity]="svc.toastFading() ? 0 : 1">{{ msg }}</div>

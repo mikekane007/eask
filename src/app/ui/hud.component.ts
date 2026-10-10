@@ -30,6 +30,7 @@ import { GameService } from '../game/game.service';
       <button class="btn-r" aria-label="Show people and progress" (click)="svc.goalsOpen.set(!svc.goalsOpen())">
         {{ svc.goalsOpen() ? '‹' : '›' }}
       </button>
+      <button class="btn-r" aria-label="Toggle map" (click)="svc.mapOpen.set(!svc.mapOpen())">M</button>
       <button class="btn-r" aria-label="Zoom in" (click)="svc.zoom.set(Math.max(0.5, svc.zoom() - 0.15))">+</button>
       <button class="btn-r" aria-label="Zoom out" (click)="svc.zoom.set(Math.min(1.8, svc.zoom() + 0.15))">−</button>
     </div>
