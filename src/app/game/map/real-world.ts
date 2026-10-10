@@ -4,6 +4,7 @@ import type { City, CityTheme, Place } from '../types';
 import { createFacades } from '../facades';
 import { type BlockInput, type Geo, type Rgb, buildBlocks } from './buildings';
 import { MapCollision } from './collision';
+import { createLandmarks } from './landmarks';
 import { buildGraph } from './road-graph';
 import { streetDetails } from './street-details';
 import { pointAlong, lineLength, toPoints, pointInPolygon, type Pt } from './geo';
@@ -263,7 +264,33 @@ export function createRealWorld(
     [0.08, 0.48, 0.45, -0.8, 0.24, 0],
     [0.08, 0.48, 0.45, 0.8, 0.24, 0],
   ]);
-  furnish(bench, M(0x6b4a2e), benches);
+  if (theme.waxPrint) {
+    // Accra: roadside stalls with bright umbrellas where European streets have benches
+    furnish(new THREE.BoxGeometry(1.6, 0.9, 0.9).translate(0, 0.45, 0), M(0x7a5236), benches);
+    if (benches.length) {
+      const shade = new THREE.InstancedMesh(
+        new THREE.ConeGeometry(1.5, 0.7, 10).translate(0, 2.55, 0),
+        new THREE.MeshLambertMaterial({ color: 0xffffff }),
+        benches.length,
+      );
+      const pole = new THREE.InstancedMesh(
+        new THREE.CylinderGeometry(0.04, 0.04, 2.3, 5).translate(0, 1.15, 0),
+        M(0x333333),
+        benches.length,
+      );
+      const o = new THREE.Object3D();
+      benches.forEach((f, i) => {
+        o.position.set(f.x, 0, f.z);
+        o.updateMatrix();
+        shade.setMatrixAt(i, o.matrix);
+        pole.setMatrixAt(i, o.matrix);
+        shade.setColorAt(i, new THREE.Color(theme.stalls[i % theme.stalls.length][0]).convertSRGBToLinear());
+      });
+      shade.castShadow = true;
+      scene.add(shade);
+      scene.add(pole);
+    }
+  } else furnish(bench, M(0x6b4a2e), benches);
   furnish(new THREE.CylinderGeometry(0.28, 0.24, 0.9, 10).translate(0, 0.45, 0), M(0x2f4a3a), bins);
 
   // ---- parks and water
@@ -382,6 +409,23 @@ export function createRealWorld(
   placeAll(new THREE.BoxGeometry(0.7, 1.8, 0.9), M(0x8a4b37), blocks.chimneys, 0.9);
   placeAll(new THREE.CylinderGeometry(0.75, 0.75, 1.6, 10), M(0x1f2326), blocks.tanks, 0.8);
 
+  // ---- famous buildings at their real places
+  const landmarkSpots = createLandmarks(scene, kit, map, city.landmarks ?? []);
+
+  // What the camera must stay clear of: every building's real top (roofs included) and the landmarks.
+  const skyline = new MapCollision(
+    [
+      ...map.buildings.map((b, i) => ({ ...b, h: blocks.tops[i] || b.h })),
+      ...landmarkSpots.map((l) => ({
+        h: l.h,
+        a: l.r * l.r * 4,
+        p: [l.x - l.r, l.z - l.r, l.x + l.r, l.z - l.r, l.x + l.r, l.z + l.r, l.x - l.r, l.z + l.r],
+      })),
+    ],
+    map.w,
+    map.h,
+  );
+
   // ---- trees: in parks and along some streets, drawn with instancing
   const treeSpots: { x: number; z: number; s: number }[] = [];
   const anchorsXZ = [map.anchors.home, map.anchors.church, map.anchors.chop, ...map.anchors.people];
@@ -467,6 +511,14 @@ export function createRealWorld(
   }
   const lampCap = Math.min(lampSpots.length, 200);
   const lampMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const poolMat = new THREE.MeshBasicMaterial({
+    map: TX['glow'],
+    color: 0xffc27a,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
   if (lampCap > 0) {
     const posts = new THREE.InstancedMesh(new THREE.BoxGeometry(0.14, 5.2, 0.14), M(0x2b3330), lampCap);
     const heads = new THREE.InstancedMesh(new THREE.BoxGeometry(0.55, 0.22, 0.55), lampMat, lampCap);
@@ -481,6 +533,15 @@ export function createRealWorld(
     }
     scene.add(posts);
     scene.add(heads);
+    // warm pools of light on the ground under each lamp, faded in at dusk
+    const pools = new THREE.InstancedMesh(new THREE.CircleGeometry(4.2, 20).rotateX(-Math.PI / 2), poolMat, lampCap);
+    for (let i = 0; i < lampCap; i++) {
+      o.position.set(lampSpots[i][0], 0.06, lampSpots[i][1]);
+      o.updateMatrix();
+      pools.setMatrixAt(i, o.matrix);
+    }
+    pools.renderOrder = 1;
+    scene.add(pools);
   }
 
   // ---- gold rings and beams for the places you can enter, and a sign on every landmark
@@ -523,7 +584,7 @@ export function createRealWorld(
     clouds: kit.makeClouds(),
     blocked: (x: number, z: number, r: number) => collision.blocked(x, z, r),
     /** Height of the building standing at a spot, 0 in the open. */
-    heightAt: (x: number, z: number) => collision.heightAt(x, z),
+    heightAt: (x: number, z: number) => skyline.heightAt(x, z),
     cut,
     /** Draws only this share (0 to 1) of the trees, for slower machines. */
     setTreeShare(share: number): void {
@@ -532,6 +593,8 @@ export function createRealWorld(
     /** Lamp heads glow warmly as it gets dark. */
     setNight(n: number) {
       lampMat.color.setRGB(0.35 + 0.65 * n, 0.33 + 0.5 * n, 0.3 + 0.1 * n);
+      poolMat.opacity = 0.55 * n;
+      poolMat.visible = n > 0.02;
     },
   };
 }

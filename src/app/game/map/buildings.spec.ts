@@ -148,6 +148,27 @@ describe('buildBlocks', () => {
     expect(b.chimneys[0][1]).toBeGreaterThan(12);
   });
 
+  it('reports the true top of every building, roof included, in order', () => {
+    const b = buildBlocks(
+      [
+        block(square(10, true)),
+        block([
+          [0, 0],
+          [1, 1],
+        ]),
+        block(square(8, true), { h: 6 }),
+      ],
+      EUROPE,
+      fan,
+    );
+    expect(b.tops).toHaveLength(3);
+    expect(b.tops[0]).toBeGreaterThan(12);
+    expect(b.tops[1]).toBe(0);
+    expect(b.tops[2]).toBeGreaterThan(6);
+    const flat = buildBlocks([block(square(10, true))], ACCRA, fan);
+    expect(flat.tops[0]).toBeGreaterThanOrEqual(12.8);
+  });
+
   it('skips broken footprints', () => {
     const b = buildBlocks(
       [

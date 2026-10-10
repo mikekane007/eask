@@ -78,4 +78,9 @@ export const LILLE: City = {
   ],
   people: withTyped(LILLE_PEOPLE),
   map: { url: 'maps/lille.json' },
+  landmarks: [
+    // Chamber of Commerce belfry by Place du Théâtre, and the Goddess column on the Grand'Place
+    { kind: 'belfry', lat: 50.6366, lon: 3.0647, h: 70, color: 0xb5533c },
+    { kind: 'column', lat: 50.63685, lon: 3.06305, h: 30, color: 0xd9d2c2 },
+  ],
 };

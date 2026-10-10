@@ -561,7 +561,7 @@ export async function createEngine(
       tilt = easeOpen(tilt, hiddenFromUsual, realDt, 1.2);
     }
     const lift = tilt * tilt * (3 - 2 * tilt);
-    camT.set(p.x, (19 + (30 - 19) * lift) * zoom, p.z + (21 + (4 - 21) * lift) * zoom);
+    camT.set(p.x, (19 + (28 - 19) * lift) * zoom, p.z + (21 + (9 - 21) * lift) * zoom);
     if (real) {
       // never let the camera end up inside a building: slide it in towards the player instead
       const spot = cameraSpot(real.heightAt, { x: p.x, y: 1.6, z: p.z }, camT);

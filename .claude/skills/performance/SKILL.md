@@ -39,3 +39,9 @@ it runs well everywhere.
   three.js must stay inside the engine tree, or three.js lands back in the first download. The 1 MB initial budget had
   been broken for several commits because CI results were not checked after pushing: always run `gh run list` after a push.
 - 2026-10-10: Firebase is loaded only on Open a room / Join (dynamic imports in `net/firebase-room.ts`). Keep it that way.
+- 2026-10-10: `svc.live.stats.drawCalls` reports `renderer.info.render.calls` four times a second; read it from the browser
+  console (`ng.getComponent(document.querySelector('app-root')).svc.live.stats`) after visual changes. A busy Lille street
+  measured about 70 with the new buildings, people and street details. Street furniture, chimneys, tanks, crowd parts and
+  lamp pools are instanced; each landmark and each person's face, brows and hair are merged shapes.
+- 2026-10-10: Pitched roofs rise above the OpenStreetMap wall height. The camera checks use `blocks.tops` (roof included)
+  and the landmarks' footprints, not the raw wall heights, or the camera ends up inside roofs.

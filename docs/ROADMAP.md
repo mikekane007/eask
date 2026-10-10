@@ -29,10 +29,12 @@ Legend: ✅ done · 🔄 in progress · ⏳ planned · ⏸ waiting on owner
 
 ## Phase 4: Look and polish
 
-- ⏳ 4.0 Camera: fade or hide buildings that hide the player
-- ⏳ 4.1 Better characters and animations (walk, wave, sit); glTF only if the size budget allows
+- ✅ 4.0 Camera: tilts to look down when buildings are in the way, never enters a building, soft see-through hole only as a fallback; moves in during conversations
+- ✅ 4.1 Better characters: faces, four hairstyles, scarves, breathing, waving, talking gestures; crowd with arms and hair (sitting and glTF models still open)
 - ⏳ 4.2 Shops and homes you can walk into
-- ⏳ 4.3 Landmarks per city (belfry, tower, Braderie stalls)
+- ✅ 4.3 Landmarks at their real places (Lille belfry and Goddess column, Douai belfry, Sorbonne dome), roadside stalls in Accra
+- ✅ 4.5 City-specific buildings (brick, stone, plaster facades; hipped, mansard and flat roofs; shop fronts and awnings), street details (kerbs, lines, crossings, benches, bins), sky glow, lamp light at night
+- ✅ 4.6 Screens: illustrated city cards, icons, a loading state, portraits and an openness gauge in conversations
 - ✅ 4.4 Quality settings (low, medium, high) plus Auto, which lowers the detail when the frame rate cannot be held
 
 ## Phase 5: Friends' feedback (2026-10-10)

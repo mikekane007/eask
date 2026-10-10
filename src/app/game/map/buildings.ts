@@ -49,6 +49,8 @@ export interface Blocks {
   /** Where to stand chimneys and tanks: x, y (roof level), z. */
   chimneys: [number, number, number][];
   tanks: [number, number, number][];
+  /** The highest point of each building (roof or parapet included), in the order given, 0 if it was skipped. */
+  tops: number[];
 }
 
 const empty = (): Geo => ({ p: [], n: [], u: [], c: [], i: [] });
@@ -151,12 +153,25 @@ export function buildBlocks(
   style: BlockStyle,
   triangulate: (p: Pt[]) => number[],
 ): Blocks {
-  const out: Blocks = { walls: empty(), shops: empty(), roofs: empty(), awnings: empty(), chimneys: [], tanks: [] };
+  const out: Blocks = {
+    walls: empty(),
+    shops: empty(),
+    roofs: empty(),
+    awnings: empty(),
+    chimneys: [],
+    tanks: [],
+    tops: [],
+  };
 
   for (const b of inputs) {
     const pts = b.pts;
     const n = pts.length;
+    out.tops.push(0);
     if (n < 3 || b.h <= 0) continue;
+    const setTop = (y: number) => {
+      out.tops[out.tops.length - 1] = y;
+    };
+    setTop(b.h);
     const ccw = area2(pts) > 0;
     const gf = Math.min(style.groundFloor, b.h);
     const area = Math.abs(area2(pts)) / 2;
@@ -332,6 +347,7 @@ export function buildBlocks(
         const r = b.seed * 6.28;
         out.tanks.push([cx + Math.cos(r) * 1.5, b.h, cz + Math.sin(r) * 1.5]);
       }
+      setTop(b.h + Math.max(style.parapet, style.tanks ? 1.6 : 0));
       continue;
     }
 
@@ -383,6 +399,7 @@ export function buildBlocks(
       else quad(out.roofs, verts, uvs, cols);
     }
     cap(out.roofs, inner, top, scale(b.roof, shape === 'hip' ? 1.05 : 0.95), 3, triangulate);
+    setTop(top + (style.chimneys ? 1.5 : 0));
     if (style.chimneys && b.seed > 0.25) {
       const j = Math.floor(b.seed * n) % n;
       out.chimneys.push([inner[j][0], top - 0.3, inner[j][1]]);

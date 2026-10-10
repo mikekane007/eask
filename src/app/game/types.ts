@@ -110,4 +110,16 @@ export interface City {
   people: Person[];
   /** A real street map (OpenStreetMap) for this city. Without one, the city uses the built-in street grid. */
   map?: { url: string };
+  /** Famous buildings drawn at their real position on the street map (left out if outside the mapped area). */
+  landmarks?: Landmark3d[];
+}
+
+export interface Landmark3d {
+  kind: 'belfry' | 'column' | 'dome';
+  lat: number;
+  lon: number;
+  /** Height in metres. */
+  h: number;
+  /** Main colour of the stone or brick. */
+  color: number;
 }

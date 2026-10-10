@@ -78,4 +78,8 @@ export const PARIS: City = {
   ],
   people: withTyped(PARIS_PEOPLE),
   map: { url: 'maps/paris.json' },
+  landmarks: [
+    // the chapel of the Sorbonne
+    { kind: 'dome', lat: 48.8487, lon: 2.3433, h: 42, color: 0xe9e1cf },
+  ],
 };

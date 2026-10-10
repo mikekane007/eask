@@ -78,4 +78,8 @@ export const DOUAI: City = {
   ],
   people: withTyped(DOUAI_PEOPLE),
   map: { url: 'maps/douai.json' },
+  landmarks: [
+    // the town-hall belfry
+    { kind: 'belfry', lat: 50.3703, lon: 3.0793, h: 62, color: 0xcfc6b2 },
+  ],
 };
