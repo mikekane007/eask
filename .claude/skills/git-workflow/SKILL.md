@@ -20,6 +20,10 @@ The owner said to push as work progresses ("while coding be pushing"), so pushin
 - Changing repo visibility, adding collaborators, tokens or secrets, deploying or publishing.
 - Never `--no-verify`, never commit `node_modules`, `dist`, `.angular`, `.playwright-mcp`, env files.
 
+## Identity
+
+All commits are authored and committed as **Michael Agyei-Kane <91568331+mikekane007@users.noreply.github.com>** (the repo owner), with **no Co-Authored-By line for Claude**. The owner asked for this on 2026-10-10. Local git config in this repo is set accordingly; do not change it.
+
 ## Commits
 
 ```
@@ -27,7 +31,6 @@ The owner said to push as work progresses ("while coding be pushing"), so pushin
 
 <body: why, then what, wrapped ~100>
 
-Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
 ```
 
 - Types: feat fix perf refactor test docs build chore.
