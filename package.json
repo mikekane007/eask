@@ -40,7 +40,7 @@
     "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.64.0",
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.7",
-    "@types/node": "^24.19.2",
+    "@types/node": "^26.6.4",
     "@types/three": "^0.128.0",
     "angular-eslint": "^19.8.1",
     "eslint": "^9.39.5",
