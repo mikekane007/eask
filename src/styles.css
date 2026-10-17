@@ -1095,3 +1095,55 @@ button:focus-visible {
   scrollbar-width: thin;
   scrollbar-color: rgba(244, 238, 220, 0.25) transparent;
 }
+
+/* How close a typed reply came */
+.close-meter {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.close-meter .bar {
+  height: 8px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: rgba(244, 238, 220, 0.1);
+  overflow: hidden;
+}
+.close-meter .bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--red);
+}
+.close-meter .bar i.ok {
+  background: var(--amber);
+}
+.close-meter .bar i.good {
+  background: var(--green);
+}
+
+/* The character choice: a turning 3D figure and the player's name */
+.look3d {
+  display: block;
+  width: 180px;
+  height: 230px;
+  margin: 0 auto 2px;
+  border-radius: 14px;
+  background: radial-gradient(circle at 50% 35%, rgba(244, 238, 220, 0.18), rgba(244, 238, 220, 0.03));
+  cursor: grab;
+  touch-action: none;
+}
+.look3d:active {
+  cursor: grabbing;
+}
+.look-turn {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+.reply.name {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 4px;
+}

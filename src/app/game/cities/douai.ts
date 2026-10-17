@@ -1,5 +1,6 @@
 import type { City } from '../types';
-import { CHURCH_OPTS, HOME_OPTS, HOURS_CHURCH, HOURS_EAT, HOURS_HOME, SKIN, mealOpts, t } from './common';
+import { CHURCH_OPTS, HOME_OPTS, HOURS_CHURCH, HOURS_EAT, HOURS_HOME, SKIN, callOpt, mealOpts, t } from './common';
+import { DOUAI_MORE } from './douai.more';
 import { DOUAI_PEOPLE } from './douai.people';
 import { withTyped } from './typed';
 
@@ -70,13 +71,16 @@ export const DOUAI: City = {
       label: t('HOME', 'MAISON'),
       sign: 'CHEZ MOI',
       open: HOURS_HOME,
-      opts: HOME_OPTS,
+      opts: [
+        ...HOME_OPTS,
+        callOpt('josiane', 'Call Josiane, home from hospital', 'Appeler Josiane, sortie de l’hôpital'),
+      ],
     },
     { id: 'market', bi: 0, bj: 2, side: 'E', deco: true, label: t('MARKET', 'MARCHÉ'), sign: 'MARCHÉ' },
     { id: 'tech', bi: 4, bj: 2, side: 'W', deco: true, label: t('BELFRY', 'BEFFROI'), sign: 'BEFFROI' },
     { id: 'site', bi: 1, bj: 1, side: 'S', deco: true, label: t('SITE', 'TRAVAUX'), sign: 'CHANTIER' },
   ],
-  people: withTyped(DOUAI_PEOPLE),
+  people: withTyped([...DOUAI_PEOPLE, ...DOUAI_MORE]),
   map: { url: 'maps/douai.json' },
   landmarks: [
     // the town-hall belfry

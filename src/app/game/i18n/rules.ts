@@ -25,7 +25,7 @@ const EN: RulesDoc = {
   sections: [
     {
       h: 'Goal',
-      p: 'Talk with everyone on the street and help each person reach **"Wants to follow Jesus"**. Manage your energy, your Word and the clock while you do it.',
+      p: 'Talk with everyone on the street and help each person reach **"Wants to follow Jesus"**. Some will say no whatever you say, and some need practical help more than words. Manage your energy, your Word and the clock while you do it.',
     },
     {
       h: 'Controls',
@@ -33,8 +33,8 @@ const EN: RulesDoc = {
         'Move: **W A S D** or the **arrow keys**. On a phone, drag anywhere on the street.',
         'Walk into a **gold ring** to open a place or start a conversation.',
         '**⇢** button (autopilot): pick the church, the café, home or a person and your character walks there by itself. Press any key or touch the controls to take over again.',
-        'In some conversations you can **type your own reply** instead of choosing one. It is judged by the ideas it carries, in English or French, and you can always switch back to the list.',
-        'Choose how your character looks from the first screen of each city: **Your character**.',
+        'In every conversation one question must be **answered in your own words**. Your reply is compared with a wise one, in English or French, and you see how close you came.',
+        'Give your name and choose how your character looks from the first screen of each city: **Your character**.',
         'Traffic obeys the signals and stops for you, but busy roads are still best crossed with care. Rush hours are busier than nights.',
         '**M** button: show or hide the map. **♪**: sound on or off. **+ / −**: zoom. **›**: people and progress. **?**: these rules.',
       ],
@@ -42,8 +42,8 @@ const EN: RulesDoc = {
     {
       h: 'Your stats',
       items: [
-        '**Energy** (starts at 80, max 100): talking costs 8 energy.',
-        '**Word** (starts at 10, max 100): your Bible knowledge. It unlocks harder conversations. A wise answer gives +2.',
+        '**Energy** (starts at 80, max 100): a conversation costs 20 energy.',
+        '**Word** (starts at 15, max 100): your Bible knowledge. Every conversation spends 15 Word, so go back to church and study before the next person. More Word also unlocks harder conversations. A wise answer gives +2.',
         '**Time**: every hour that passes costs 1.5 energy and 0.2 Word. Time also passes slowly as you walk about (one hour takes about three minutes), so shops open and close and night falls.',
         '**Weather**: it changes through the day and depends on the city (clear, cloudy, rain, fog). It dims the light and shortens how far you can see.',
         '**Wise answers**: the share of your answers that were the best choice.',
@@ -55,18 +55,20 @@ const EN: RulesDoc = {
       items: [
         '**{church}** (06:00–21:00): Bible study (+12 Word, 2h, −5 energy). Evangelism training (needs Word 20; +20 Word, 3h, −8 energy). Prayer meeting (+10 energy, 1h).',
         '**{eat}** (06:00–23:00): a meal gives +25 or +40 energy, 1 hour each.',
-        '**{home}**: sleep to refill energy and start again at 07:00. Sleeping after 07:00 moves to the next day.',
+        '**{home}**: sleep to refill energy and start again at 07:00. Sleeping after 07:00 moves to the next day. Some people are reached by **phone from home**.',
         'The other buildings are scenery. Ordinary people walk the pavements on daily routines (commuters, shoppers, students, night owls) and go indoors when it rains.',
       ],
     },
     {
       h: 'Conversations',
       items: [
-        'You can talk between **07:00 and 21:00** with at least **15 energy**. It costs 1 hour.',
+        'You can talk between **07:00 and 21:00** with at least **20 energy** and **15 Word**. It costs 1 hour, 20 energy and 15 Word.',
         'Each person asks 3 questions. Pick one of 3 answers: wise, partly there, or missed it.',
         '**Openness** starts at 50. Wise **+18**, partly there **+3**, missed it **−25**. At 0 the person walks away.',
         'Result: **80+** wants to follow Jesus · **45–79** seed sown · **below 45** walked away. You can try again; a better result replaces a worse one, never the other way round.',
         'After every answer you see why it was right or wrong, with a Bible reference.',
+        '**Some people will say no** however well you answer. Rejection happens. Stay kind and leave the door open (openness 45 or more) and it counts as **said no, door left open**.',
+        '**Some people need help, not a sermon**: a call to check on them, food, money, or telling the Presiding Elder. Caring well (80+) counts as **cared for**.',
       ],
     },
   ],
@@ -90,10 +92,10 @@ const EN: RulesDoc = {
       h: 'A good first day',
       ordered: true,
       items: [
-        'Talk to the people who need no Word.',
-        'Eat if your energy is low, then do Bible study.',
-        'Do evangelism training once your Word reaches 20.',
-        'Sleep, then talk to the people you have unlocked.',
+        'Talk to one person who needs no Word.',
+        'Go to church for Bible study before the next conversation.',
+        'Eat if your energy is low. Do evangelism training once your Word reaches 20.',
+        'Sleep, then keep going: study, talk, study, talk.',
       ],
     },
     {
@@ -108,7 +110,7 @@ const FR: RulesDoc = {
   sections: [
     {
       h: 'But du jeu',
-      p: 'Parlez avec tous les gens de la rue et aidez chacun à atteindre **« Veut suivre Jésus »**. Gérez votre énergie, votre Parole et l’horloge en même temps.',
+      p: 'Parlez avec tous les gens de la rue et aidez chacun à atteindre **« Veut suivre Jésus »**. Certains diront non quoi que vous disiez, et d’autres ont besoin d’une aide concrète plus que de paroles. Gérez votre énergie, votre Parole et l’horloge en même temps.',
     },
     {
       h: 'Commandes',
@@ -116,8 +118,8 @@ const FR: RulesDoc = {
         'Se déplacer : **W A S D** ou les **flèches**. Sur téléphone, faites glisser le doigt n’importe où dans la rue.',
         'Entrez dans un **cercle doré** pour ouvrir un lieu ou engager une conversation.',
         'Bouton **⇢** (pilote automatique) : choisissez l’église, le café, la maison ou une personne et votre personnage s’y rend tout seul. Appuyez sur une touche ou touchez les commandes pour reprendre la main.',
-        'Dans certaines conversations, vous pouvez **écrire votre propre réponse** au lieu d’en choisir une. Elle est jugée sur les idées qu’elle contient, en français ou en anglais, et vous pouvez toujours revenir à la liste.',
-        'Choisissez l’apparence de votre personnage sur le premier écran de chaque ville : **Votre personnage**.',
+        'Dans chaque conversation, une question demande une **réponse écrite avec vos propres mots**. Elle est comparée à une réponse sage, en français ou en anglais, et vous voyez à quel point vous en étiez proche.',
+        'Donnez votre nom et choisissez l’apparence de votre personnage sur le premier écran de chaque ville : **Votre personnage**.',
         'La circulation respecte les feux et s’arrête pour vous, mais les grandes routes se traversent toujours avec prudence. Les heures de pointe sont plus chargées que les nuits.',
         'Bouton **M** : afficher ou masquer la carte. **♪** : son activé ou coupé. **+ / −** : zoom. **›** : personnes et progression. **?** : ces règles.',
       ],
@@ -125,8 +127,8 @@ const FR: RulesDoc = {
     {
       h: 'Vos jauges',
       items: [
-        '**Énergie** (80 au départ, 100 au maximum) : une conversation coûte 8 d’énergie.',
-        '**Parole** (10 au départ, 100 au maximum) : votre connaissance de la Bible. Elle débloque des conversations plus difficiles. Une sage réponse donne +2.',
+        '**Énergie** (80 au départ, 100 au maximum) : une conversation coûte 20 d’énergie.',
+        '**Parole** (15 au départ, 100 au maximum) : votre connaissance de la Bible. Chaque conversation dépense 15 de Parole : retournez à l’église étudier avant la personne suivante. Plus de Parole débloque aussi des conversations plus difficiles. Une sage réponse donne +2.',
         '**Temps** : chaque heure qui passe coûte 1,5 d’énergie et 0,2 de Parole. Le temps passe aussi lentement quand vous vous promenez (une heure dure environ trois minutes) : les commerces ouvrent et ferment, et la nuit tombe.',
         '**Météo** : elle change au fil de la journée et dépend de la ville (dégagé, nuageux, pluie, brouillard). Elle baisse la lumière et réduit la portée de la vue.',
         '**Bonnes réponses** : la part de vos réponses qui étaient le meilleur choix.',
@@ -138,18 +140,20 @@ const FR: RulesDoc = {
       items: [
         '**{church}** (6 h – 21 h) : étude biblique (+12 Parole, 2 h, −5 énergie). Formation à l’évangélisation (Parole 20 requise ; +20 Parole, 3 h, −8 énergie). Réunion de prière (+10 énergie, 1 h).',
         '**{eat}** (6 h – 23 h) : un repas donne +25 ou +40 d’énergie, 1 heure chacun.',
-        '**{home}** : dormez pour refaire le plein d’énergie et repartir à 07 h 00. Dormir après 07 h 00 fait passer au jour suivant.',
+        '**{home}** : dormez pour refaire le plein d’énergie et repartir à 07 h 00. Dormir après 07 h 00 fait passer au jour suivant. Certaines personnes se joignent **par téléphone depuis chez vous**.',
         'Les autres bâtiments sont du décor. Des gens ordinaires marchent sur les trottoirs selon leurs habitudes (travailleurs, clients, étudiants, noctambules) et rentrent à l’abri quand il pleut.',
       ],
     },
     {
       h: 'Les conversations',
       items: [
-        'Vous pouvez parler entre **07 h 00 et 21 h 00** avec au moins **15 d’énergie**. Cela prend 1 heure.',
+        'Vous pouvez parler entre **07 h 00 et 21 h 00** avec au moins **20 d’énergie** et **15 de Parole**. Cela prend 1 heure, 20 d’énergie et 15 de Parole.',
         'Chaque personne pose 3 questions. Choisissez l’une des 3 réponses : sage, en partie juste, ou à côté.',
         'L’**ouverture** commence à 50. Sage **+18**, en partie juste **+3**, à côté **−25**. À 0, la personne s’en va.',
         'Résultat : **80 et plus** veut suivre Jésus · **45 à 79** une graine est semée · **moins de 45** est parti(e). Vous pouvez réessayer ; un meilleur résultat remplace un moins bon, jamais l’inverse.',
         'Après chaque réponse, vous voyez pourquoi elle était juste ou non, avec une référence biblique.',
+        '**Certaines personnes diront non**, même à de très bonnes réponses. Le refus arrive. Restez aimable et laissez la porte ouverte (ouverture 45 ou plus) : cela compte comme **a dit non, porte restée ouverte**.',
+        '**Certaines personnes ont besoin d’aide, pas d’un sermon** : un appel pour prendre des nouvelles, de quoi manger, de l’argent, ou prévenir l’Ancien président. Bien prendre soin (80 et plus) compte comme **soutenu(e)**.',
       ],
     },
   ],
@@ -173,10 +177,10 @@ const FR: RulesDoc = {
       h: 'Une bonne première journée',
       ordered: true,
       items: [
-        'Parlez aux personnes qui ne demandent aucune Parole.',
-        'Mangez si votre énergie est basse, puis faites une étude biblique.',
-        'Suivez la formation à l’évangélisation dès que votre Parole atteint 20.',
-        'Dormez, puis parlez aux personnes que vous avez débloquées.',
+        'Parlez à une personne qui ne demande aucune Parole.',
+        'Allez à l’église pour une étude biblique avant la conversation suivante.',
+        'Mangez si votre énergie est basse. Suivez la formation à l’évangélisation dès que votre Parole atteint 20.',
+        'Dormez, puis continuez : étudier, parler, étudier, parler.',
       ],
     },
     {

@@ -1,6 +1,7 @@
 import { Injector, NgZone, runInInjectionContext } from '@angular/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ACCRA } from './cities/accra';
+import { LILLE } from './cities/lille';
 import { GameService, SECONDS_PER_GAME_HOUR } from './game.service';
 import { I18n } from './i18n/i18n.service';
 import type { Quality } from './types';
@@ -62,7 +63,7 @@ describe('GameService', () => {
   describe('new game', () => {
     it('starts at 07:00 on day 1 with the documented stats', () => {
       const s = svc.state();
-      expect([s.hour, s.day, s.body, s.word]).toEqual([7, 1, 80, 10]);
+      expect([s.hour, s.day, s.body, s.word]).toEqual([7, 1, 80, 15]);
     });
 
     it('spawns the player next to home, not at the map origin', () => {
@@ -119,7 +120,7 @@ describe('GameService', () => {
 
   describe('approaching people', () => {
     it('blocks people whose Word requirement is not met', () => {
-      expect(svc.approachBlock(person('efua'))).toContain('Word reaches 15');
+      expect(svc.approachBlock(person('kofi'))).toContain('Word reaches 20');
     });
 
     it('blocks conversations after 21:00 and before 07:00', () => {
@@ -129,8 +130,13 @@ describe('GameService', () => {
       expect(svc.approachBlock(person('kwame'))).toContain('too late');
     });
 
-    it('blocks conversations when energy is below 15', () => {
-      svc.patch({ body: 14 });
+    it('asks you to study again once a conversation has spent your Word', () => {
+      svc.patch({ word: 14 });
+      expect(svc.approachBlock(person('kwame'))).toContain('study the Word');
+    });
+
+    it('blocks conversations when energy is below 20', () => {
+      svc.patch({ body: 19 });
       expect(svc.approachBlock(person('kwame'))).toContain('too tired');
     });
 
@@ -140,11 +146,12 @@ describe('GameService', () => {
   });
 
   describe('conversations', () => {
-    it('costs one hour and 8 energy to start (plus the hourly drain)', () => {
+    it('costs one hour, 20 energy and 15 Word to start (plus the hourly drain)', () => {
       svc.startTalk(person('kwame'));
       const s = svc.state();
       expect(s.hour).toBe(8);
-      expect(s.body).toBe(80 - 1.5 - 8);
+      expect(s.body).toBe(80 - 1.5 - 20);
+      expect(s.word).toBe(0);
       expect(svc.talking()?.open).toBe(50);
     });
 
@@ -208,6 +215,70 @@ describe('GameService', () => {
     });
   });
 
+  describe('people who say no, care and typed replies', () => {
+    const lille = (id: string) => {
+      const p = LILLE.people.find((x) => x.id === id);
+      if (!p) throw new Error(`no person ${id}`);
+      return p;
+    };
+    let ls: GameService;
+    beforeEach(() => {
+      ls = makeService('lille');
+      ls.patch({ word: 100, body: 100, hour: 9 });
+    });
+
+    it('ends in a gracious no, never in following Jesus, with someone who has decided to refuse', () => {
+      ls.startTalk(lille('margot'));
+      answerWith(ls, 'good');
+      expect(ls.talking()?.open).toBe(60);
+      playThrough(ls, 'good');
+      expect(ls.talking()?.outcome).toBe('declined');
+      expect(ls.endMessage(ls.talking()!)).toContain('not interested in Christ');
+      expect(ls.state().best['margot']).toBe('declined');
+    });
+
+    it('ends a refusal badly when the player pushes back harshly', () => {
+      ls.startTalk(lille('margot'));
+      playThrough(ls, 'bad');
+      expect(ls.talking()?.outcome).toBe('away');
+    });
+
+    it('counts practical care as caring for someone', () => {
+      ls.startTalk(lille('ines'));
+      playThrough(ls, 'good');
+      expect(ls.talking()?.outcome).toBe('cared');
+      expect(ls.count('cared')).toBe(1);
+    });
+
+    it('scores how close a typed reply came to a wise one', () => {
+      ls.startTalk(lille('thomas'));
+      answerWith(ls, 'good');
+      ls.next();
+      ls.answerTyped('I would love to look at the evidence together with you');
+      const t = ls.talking();
+      expect(t?.phase).toBe('feedback');
+      expect(t?.close).toBeGreaterThan(0);
+      expect(t?.close).toBeLessThanOrEqual(100);
+      ls.next();
+      expect(ls.talking()?.close).toBeUndefined();
+    });
+
+    it('phones someone from home instead of meeting them on the street', () => {
+      const home = LILLE.places.find((p) => p.id === 'home');
+      const call = home?.opts?.find((o) => o.call);
+      if (!call || !home) throw new Error('no call option');
+      expect(ls.streetPeople().some((p) => p.id === 'lefebvre')).toBe(false);
+      expect(ls.placeClosedReason(call, home)).toBe('');
+      ls.usePlaceOption(call);
+      expect(ls.talking()?.P.id).toBe('lefebvre');
+    });
+
+    it('keeps phone people off the street and out of the live positions', () => {
+      expect(ls.live.npcs.map((n) => n.id)).not.toContain('lefebvre');
+      expect(ls.live.npcs).toHaveLength(ls.streetPeople().length);
+    });
+  });
+
   describe('places', () => {
     it('reports a closed chapel at night', () => {
       svc.patch({ hour: 3 });
@@ -226,7 +297,7 @@ describe('GameService', () => {
       svc.usePlaceOption(study);
       const s = svc.state();
       expect(s.hour).toBe(9);
-      expect(s.word).toBeCloseTo(10 + 12 - 0.4);
+      expect(s.word).toBeCloseTo(15 + 12 - 0.4);
       expect(s.body).toBeCloseTo(80 - 3 - 5);
     });
 

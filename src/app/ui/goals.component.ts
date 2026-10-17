@@ -26,6 +26,12 @@ import { I18n } from '../game/i18n/i18n.service';
             {{ i18n.t('wantFollow') }}<b>{{ svc.won() }}</b>
           </li>
           <li>
+            {{ i18n.t('graciousNo') }}<b>{{ svc.count('declined') }}</b>
+          </li>
+          <li>
+            {{ i18n.t('caredFor') }}<b>{{ svc.count('cared') }}</b>
+          </li>
+          <li>
             {{ i18n.t('wiseAnswers') }}<b>{{ i18n.t('wiseOf', { a: svc.state().good, b: svc.state().total }) }}</b>
           </li>
         </ul>

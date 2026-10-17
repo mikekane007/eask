@@ -8,7 +8,7 @@ import type { Idea, Person, Typed } from '../types';
  */
 
 /** Builds an idea from two lists written with | between the words. */
-const idea = (en: string, fr: string): Idea => ({ en: en.split('|'), fr: fr.split('|') });
+export const idea = (en: string, fr: string): Idea => ({ en: en.split('|'), fr: fr.split('|') });
 
 /** The round that can be typed: the second question in each conversation. */
 const TYPED_ROUND = 1;

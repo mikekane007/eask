@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Typed } from './types';
-import { MIN_WORDS, gradeReply, normalize, wordCount } from './typed-answer';
+import { MIN_WORDS, closeness, gradeReply, normalize, wordCount } from './typed-answer';
 
 const typed: Typed = {
   ideas: [
@@ -79,5 +79,17 @@ describe('gradeReply', () => {
     };
     expect(gradeReply('aaa bbb', three)).toBe('ok');
     expect(gradeReply('aaa bbb ccc', three)).toBe('good');
+  });
+});
+
+describe('closeness', () => {
+  it('is the share of the needed ideas a reply carries', () => {
+    expect(closeness('God forgives us because Jesus died on the cross.', typed)).toBe(100);
+    expect(closeness('His grace is enough for you', typed)).toBe(50);
+    expect(closeness('Have a nice day', typed)).toBe(0);
+  });
+
+  it('is zero for a harsh reply, whatever else it says', () => {
+    expect(closeness('You fool, grace and the cross are for you', typed)).toBe(0);
   });
 });

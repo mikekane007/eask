@@ -1,5 +1,6 @@
 import type { City } from '../types';
-import { CHURCH_OPTS, HOME_OPTS, HOURS_CHURCH, HOURS_EAT, HOURS_HOME, SKIN, mealOpts, t } from './common';
+import { CHURCH_OPTS, HOME_OPTS, HOURS_CHURCH, HOURS_EAT, HOURS_HOME, SKIN, callOpt, mealOpts, t } from './common';
+import { LILLE_MORE } from './lille.more';
 import { LILLE_PEOPLE } from './lille.people';
 import { withTyped } from './typed';
 
@@ -57,7 +58,7 @@ export const LILLE: City = {
       sign: 'LA MAJESTÉ',
       open: HOURS_EAT,
       opts: mealOpts(
-        t('Waffle and coffee', 'Gaufre et café'),
+        t('Cake and coffee', 'Gâteau et café'),
         t('Carbonnade flamande with fries', 'Carbonade flamande et frites'),
       ),
     },
@@ -70,13 +71,16 @@ export const LILLE: City = {
       label: t('HOME', 'MAISON'),
       sign: 'CHEZ MOI',
       open: HOURS_HOME,
-      opts: HOME_OPTS,
+      opts: [
+        ...HOME_OPTS,
+        callOpt('lefebvre', 'Call Mme Lefebvre to check on her', 'Appeler Mme Lefebvre pour prendre de ses nouvelles'),
+      ],
     },
     { id: 'market', bi: 4, bj: 1, side: 'W', deco: true, label: t('BRADERIE', 'BRADERIE'), sign: 'BRADERIE' },
     { id: 'tech', bi: 1, bj: 3, side: 'N', deco: true, label: t('TOWER', 'TOUR'), sign: 'EURALILLE' },
     { id: 'site', bi: 2, bj: 0, side: 'S', deco: true, label: t('SITE', 'TRAVAUX'), sign: 'CHANTIER' },
   ],
-  people: withTyped(LILLE_PEOPLE),
+  people: withTyped([...LILLE_PEOPLE, ...LILLE_MORE]),
   map: { url: 'maps/lille.json' },
   landmarks: [
     // Chamber of Commerce belfry by Place du Théâtre, and the Goddess column on the Grand'Place

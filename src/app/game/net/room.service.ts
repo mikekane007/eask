@@ -46,14 +46,26 @@ export class RoomService {
     this.game.onLeaveCity = () => {
       void this.leave();
     };
+    this.game.nameMissing = () => !this.hasName();
   }
 
+  /** The name kept on this device, or '' if the player has not given one yet. */
   private readName(): string {
     try {
-      return cleanName(localStorage.getItem(NAME_KEY) ?? '');
+      return cleanName(localStorage.getItem(NAME_KEY) ?? '', '');
     } catch {
-      return 'Friend';
+      return '';
     }
+  }
+
+  /** True once the player has typed a name (spaces alone do not count). */
+  hasName(): boolean {
+    return cleanName(this.name(), '') !== '';
+  }
+
+  /** Keeps the name on this device, for the next visit and for playing together. */
+  saveName(): void {
+    this.remember();
   }
 
   setName(value: string): void {

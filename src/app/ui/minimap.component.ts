@@ -4,6 +4,7 @@ import { I18n } from '../game/i18n/i18n.service';
 import { B, H, N, T, bC, bMin } from '../game/layout';
 import { toPoints } from '../game/map/geo';
 import type { MapData } from '../game/map/types';
+import { OUTCOMES } from '../game/state';
 
 const SIZE = 176;
 /** On a real map the minimap shows this many metres across, centred on you. */
@@ -105,7 +106,8 @@ export class MinimapComponent implements OnInit, OnDestroy {
     // people
     const pulse = 3.4 + Math.sin(performance.now() / 250);
     for (const n of live.npcs) {
-      const won = s.best[n.id] === 'open';
+      const b = s.best[n.id];
+      const won = b !== undefined && OUTCOMES[b].rank === 3;
       g.beginPath();
       g.arc(X(n.x), Z(n.z), n.on ? pulse : 2.4, 0, Math.PI * 2);
       g.fillStyle = won ? '#3dbe6e' : n.on ? '#f2b705' : '#66736b';

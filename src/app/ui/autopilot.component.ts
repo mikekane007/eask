@@ -20,7 +20,7 @@ import { I18n } from '../game/i18n/i18n.service';
                 </button>
               }
             }
-            @for (n of svc.people(); track n.id) {
+            @for (n of svc.streetPeople(); track n.id) {
               <button type="button" class="mbtn ghost" (click)="svc.goTo({ kind: 'npc', id: n.id })">
                 {{ n.name }}
               </button>

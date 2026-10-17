@@ -1,5 +1,6 @@
 import type { City } from '../types';
-import { CHURCH_OPTS, HOME_OPTS, HOURS_CHURCH, HOURS_EAT, HOURS_HOME, SKIN, mealOpts, t } from './common';
+import { CHURCH_OPTS, HOME_OPTS, HOURS_CHURCH, HOURS_EAT, HOURS_HOME, SKIN, callOpt, mealOpts, t } from './common';
+import { PARIS_MORE } from './paris.more';
 import { PARIS_PEOPLE } from './paris.people';
 import { withTyped } from './typed';
 
@@ -70,13 +71,16 @@ export const PARIS: City = {
       label: t('HOME', 'MAISON'),
       sign: 'CHEZ MOI',
       open: HOURS_HOME,
-      opts: HOME_OPTS,
+      opts: [
+        ...HOME_OPTS,
+        callOpt('benedicte', 'Call Bénédicte to see how she is', 'Appeler Bénédicte pour prendre de ses nouvelles'),
+      ],
     },
     { id: 'market', bi: 0, bj: 2, side: 'E', deco: true, label: t('MARKET', 'MARCHÉ'), sign: 'MARCHÉ' },
     { id: 'tech', bi: 2, bj: 4, side: 'N', deco: true, label: t('TOWER', 'TOUR'), sign: 'LA DÉFENSE' },
     { id: 'site', bi: 3, bj: 3, side: 'N', deco: true, label: t('SITE', 'TRAVAUX'), sign: 'CHANTIER' },
   ],
-  people: withTyped(PARIS_PEOPLE),
+  people: withTyped([...PARIS_PEOPLE, ...PARIS_MORE]),
   map: { url: 'maps/paris.json' },
   landmarks: [
     // the chapel of the Sorbonne

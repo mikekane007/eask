@@ -12,6 +12,7 @@ export const ACCRA: City = {
     'Tro-tros, gargotes et une rue pleine de vraies questions.',
   ),
   reviewed: true,
+  hidden: true,
   theme: {
     wallColors: [0xf3e2b3, 0xf4b183, 0x9fd3e6, 0xe98c73, 0xf6f1e7, 0xc6e2a3, 0xe7b97f, 0xd9c3e6, 0xffffff, 0xf7d774],
     roof: { kind: 'corrugated', colors: [0xd0d0d0, 0xb08070], pitch: 1.5 },

@@ -54,10 +54,21 @@ export const MIN_WORDS = 3;
  * language they chose to type in.
  */
 export function gradeReply(reply: string, typed: Typed): Quality {
-  const text = normalize(reply);
-  if (HARSH.some((h) => hasWord(' ' + text + ' ', h))) return 'bad';
-  const hits = typed.ideas.filter((idea) => [...idea.en, ...idea.fr].some((k) => hasWord(text, k))).length;
-  const need = Math.min(typed.need ?? 2, typed.ideas.length);
+  const { hits, need, harsh } = score(reply, typed);
+  if (harsh) return 'bad';
   if (hits >= need && hits > 0) return 'good';
   return hits > 0 ? 'ok' : 'bad';
+}
+
+/** How close a typed reply came to a wise one, from 0 to 100: the share of the needed ideas it carries. */
+export function closeness(reply: string, typed: Typed): number {
+  const { hits, need, harsh } = score(reply, typed);
+  return harsh || need === 0 ? 0 : Math.round((Math.min(hits, need) / need) * 100);
+}
+
+function score(reply: string, typed: Typed): { hits: number; need: number; harsh: boolean } {
+  const text = normalize(reply);
+  const harsh = HARSH.some((h) => hasWord(' ' + text + ' ', h));
+  const hits = typed.ideas.filter((idea) => [...idea.en, ...idea.fr].some((k) => hasWord(text, k))).length;
+  return { hits, need: Math.min(typed.need ?? 2, typed.ideas.length), harsh };
 }

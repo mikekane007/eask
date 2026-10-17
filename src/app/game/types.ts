@@ -25,9 +25,16 @@ export interface Typed {
 export interface Round {
   q: L10n;
   a: Answer[];
-  /** When set, this round can be answered by typing as well as by choosing. The three answers still give the feedback. */
+  /** When set, this round must be answered by typing; the three answers then give the feedback and the wiser reply. */
   typed?: Typed;
 }
+
+/**
+ * What kind of meeting this is. `talk` (the default) shares the gospel. `refuse` is someone who will say no
+ * whatever you answer: the point is to stay gracious and leave the door open. `care` is about a practical need
+ * rather than the gospel: checking up on someone, food, money, or passing it on to the church.
+ */
+type PersonKind = 'talk' | 'refuse' | 'care';
 
 export interface Person {
   id: string;
@@ -40,6 +47,9 @@ export interface Person {
   /** [axis, road index, block, start fraction]: the stretch of street this person paces. */
   spot: ['h' | 'v', number, number, number];
   rounds: Round[];
+  kind?: PersonKind;
+  /** Reached by phone from home instead of on the street. Phone people come last in a city's list. */
+  phone?: boolean;
   female?: boolean;
   /** Skin tone as a hex colour. Defaults to the city's palette. */
   skin?: number;
@@ -53,6 +63,8 @@ export interface PlaceOption {
   body?: number;
   sleep?: boolean;
   need?: { word: number };
+  /** Phones this person (by id) instead of using the place. */
+  call?: string;
 }
 
 export interface Place {
@@ -103,6 +115,8 @@ export interface City {
   tagline: L10n;
   /** False while the content is an unreviewed draft. Shown to the player. */
   reviewed: boolean;
+  /** Kept in the game (and its saves) but not offered on the city picker. */
+  hidden?: boolean;
   theme: CityTheme;
   /** How often each kind of weather happens here. */
   climate: Climate;

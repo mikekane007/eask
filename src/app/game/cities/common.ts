@@ -1,4 +1,4 @@
-import type { Answer, L10n, PlaceOption, Quality, Round } from '../types';
+import type { Answer, Idea, L10n, PlaceOption, Quality, Round } from '../types';
 
 /** Shorthand for an English/French pair. */
 export const t = (en: string, fr: string): L10n => ({ en, fr });
@@ -52,3 +52,12 @@ export const rnd3 = (qEn: string, qFr: string, a: Answer, b: Answer, c: Answer):
   q: t(qEn, qFr),
   a: [a, b, c],
 });
+
+/** A question that must be answered by typing: judged by the ideas it carries, explained by its three answers. */
+export const typed3 = (qEn: string, qFr: string, ideas: Idea[], a: Answer, b: Answer, c: Answer): Round => ({
+  ...rnd3(qEn, qFr, a, b, c),
+  typed: { ideas },
+});
+
+/** An option at home that phones someone instead of meeting them on the street. */
+export const callOpt = (id: string, en: string, fr: string): PlaceOption => ({ label: t(en, fr), call: id });

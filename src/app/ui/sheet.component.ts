@@ -40,6 +40,7 @@ import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types'
                 </div>
                 <div class="bubble">{{ i18n.tr(t.P.rounds[t.round].q) }}</div>
                 @if (isTyped(t)) {
+                  <p class="sub">{{ i18n.t('typeOnly') }}</p>
                   <div class="typed">
                     <input
                       #reply
@@ -57,7 +58,6 @@ import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types'
                   @if (draft() && !canSend()) {
                     <p class="why">{{ i18n.t('typeShort') }}</p>
                   }
-                  <button class="linkbtn" (click)="choosing.set(roundKey(t))">{{ i18n.t('typeInstead') }}</button>
                 } @else {
                   <div class="opts">
                     @for (a of t.choices; track $index; let i = $index) {
@@ -66,9 +66,6 @@ import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types'
                       </button>
                     }
                   </div>
-                  @if (t.P.rounds[t.round].typed) {
-                    <button class="linkbtn" (click)="choosing.set('')">{{ i18n.t('typeOwn') }}</button>
-                  }
                 }
               }
               @case ('feedback') {
@@ -95,6 +92,21 @@ import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types'
                 <div class="bubble">{{ i18n.tr(t.P.rounds[t.round].q) }}</div>
                 @if (t.picked; as p) {
                   <div class="mine">{{ i18n.t('youSaid', { text: i18n.tr(p[0]) }) }}</div>
+                  @if (t.close !== undefined) {
+                    <div class="close-meter">
+                      <span>{{ i18n.t('closeness', { n: t.close }) }}</span>
+                      <div
+                        class="bar"
+                        role="meter"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        [attr.aria-valuenow]="t.close"
+                        [attr.aria-label]="i18n.t('closeness', { n: t.close })"
+                      >
+                        <i [style.width.%]="t.close" [class]="p[1]"></i>
+                      </div>
+                    </div>
+                  }
                   <div [class]="'fb ' + p[1]">
                     <span class="verdict">{{ i18n.t(verdictKey[p[1]]) }}</span
                     >{{ i18n.tr(p[2]) }}<span class="ref">{{ i18n.ref(p[3]) }}</span>
@@ -191,15 +203,12 @@ export class SheetComponent {
   private readonly sound = inject(SoundService);
 
   pick(a: Answer): void {
-    this.choosing.set('');
     this.svc.answer(a);
     this.sound.verdict(a[1]);
   }
-  /** What is being typed, and which question the player chose to answer from the list instead. */
+  /** What is being typed for a question that must be answered in your own words. */
   readonly draft = signal('');
-  readonly choosing = signal('');
-  roundKey = (t: Talk) => `${t.P.id}:${t.round}`;
-  isTyped = (t: Talk) => !!t.P.rounds[t.round].typed && this.choosing() !== this.roundKey(t);
+  isTyped = (t: Talk) => !!t.P.rounds[t.round].typed;
   canSend = () => wordCount(this.draft()) >= MIN_WORDS;
   send(): void {
     const t = this.svc.talking();
@@ -224,6 +233,7 @@ export class SheetComponent {
   roundText = (t: Talk) => this.i18n.t('questionOf', { n: t.round + 1, total: t.P.rounds.length });
   best = (t: Talk) => t.P.rounds[t.round].a.find((x) => x[1] === 'good') ?? t.P.rounds[t.round].a[0];
   effects(o: PlaceOption): string {
+    if (o.call) return this.i18n.t('talkCost');
     const fx: string[] = [];
     if (o.word) fx.push(this.i18n.t('fxWord', { n: o.word }));
     if (o.body) fx.push(this.i18n.t('fxEnergy', { n: (o.body > 0 ? '+' : '') + o.body }));

@@ -3,12 +3,22 @@ import { type Avatar, DEFAULT_AVATAR, parseAvatar } from './avatar';
 import { CITIES, getCity } from './cities';
 import { I18n } from './i18n/i18n.service';
 import { UI } from './i18n/ui';
-import { gradeReply } from './typed-answer';
+import { closeness, gradeReply } from './typed-answer';
 import { markerPos } from './layout';
 import { loadMap } from './map/load';
 import type { MapData } from './map/types';
 import { type Weather, weatherAt } from './weather';
-import { FRESH, type GameState, OUTCOMES, type OutcomeId } from './state';
+import {
+  FRESH,
+  type GameState,
+  OUTCOMES,
+  type OutcomeId,
+  REFUSE_CAP,
+  TALK_ENERGY,
+  TALK_WORD,
+  goalOf,
+  outcomeFor,
+} from './state';
 import type { Answer, Person, Place, PlaceOption, Quality } from './types';
 
 const storageKey = (cityId: string) => `goandtell:${cityId}`;
@@ -31,9 +41,11 @@ export interface Talk {
   phase: 'question' | 'feedback' | 'result';
   choices: Answer[];
   picked?: Answer;
+  /** For a typed reply, how close it came to a wise one (0 to 100). */
+  close?: number;
   outcome?: OutcomeId;
   /** How the conversation ended, used to pick the closing message. */
-  ending?: 'open' | 'seed' | 'awayCut' | 'awayPolite';
+  ending?: OutcomeId | 'awayCut' | 'awayPolite';
 }
 
 /** Real seconds that make one game hour while you walk about. */
@@ -62,6 +74,8 @@ export class GameService {
   }
 
   readonly cities = CITIES;
+  /** The cities offered on the picker. */
+  readonly pickable = CITIES.filter((c) => !c.hidden);
   /** The city being played, or null while the city picker is showing. */
   readonly cityId = signal<string | null>(null);
   readonly city = computed(() => {
@@ -69,6 +83,8 @@ export class GameService {
     return id ? (getCity(id) ?? null) : null;
   });
   readonly people = computed(() => this.city()?.people ?? []);
+  /** The people who walk the street (everyone but those you phone from home), in the order the engine draws them. */
+  readonly streetPeople = computed(() => this.people().filter((P) => !P.phone));
   readonly places = computed(() => this.city()?.places ?? []);
 
   readonly state = signal<GameState>(freshState());
@@ -125,6 +141,9 @@ export class GameService {
   /** Set by the room service so that leaving a city also leaves the room you were playing together in. */
   onLeaveCity: () => void = () => undefined;
 
+  /** Set by the room service, which keeps the player's name: true while no name has been given. */
+  nameMissing: () => boolean = () => false;
+
   /** Set by the 3D engine so the service can move the player. */
   teleport: (x: number, z: number) => void = () => undefined;
 
@@ -135,6 +154,10 @@ export class GameService {
   });
   readonly met = computed(() => Object.keys(this.state().best).length);
   readonly won = computed(() => Object.values(this.state().best).filter((v) => v === 'open').length);
+  /** How many people's best meeting so far ended this way. */
+  count(o: OutcomeId): number {
+    return Object.values(this.state().best).filter((v) => v === o).length;
+  }
 
   private toastTimer?: ReturnType<typeof setTimeout>;
   private toastTimer2?: ReturnType<typeof setTimeout>;
@@ -208,7 +231,7 @@ export class GameService {
     }
     this.state.set(s);
     this.hasSave.set(raw !== null);
-    this.live.npcs = city.people.map((P) => ({ id: P.id, x: 0, z: 0, on: false }));
+    this.live.npcs = city.people.filter((P) => !P.phone).map((P) => ({ id: P.id, x: 0, z: 0, on: false }));
     this.current.set(null);
     this.talking.set(null);
     this.playing.set(false);
@@ -267,9 +290,9 @@ export class GameService {
     if (why === 'blocked') this.toast(this.i18n.t('autoBlocked'));
   }
 
-  /** The Step out button: the first time, ask for a look before starting. */
+  /** The Step out button: the first time, ask for a name and a look before starting. */
   begin(): void {
-    if (this.avatarChosen()) {
+    if (this.avatarChosen() && !this.nameMissing()) {
       this.start();
       return;
     }
@@ -402,10 +425,17 @@ export class GameService {
       return this.i18n.t('closedOpens', { t: this.pad(open[0]) });
     }
     if (o.need && s.word < o.need.word) return this.i18n.t('needsWord', { n: o.need.word });
+    const callee = o.call ? this.people().find((p) => p.id === o.call) : undefined;
+    if (callee) return this.approachBlock(callee);
     return '';
   }
 
   usePlaceOption(o: PlaceOption): void {
+    const callee = o.call ? this.people().find((p) => p.id === o.call) : undefined;
+    if (callee) {
+      if (!this.approachBlock(callee)) this.startTalk(callee);
+      return;
+    }
     if (o.sleep) {
       this.state.update((s) => ({ ...s, body: 100, day: s.hour >= 7 ? s.day + 1 : s.day, hour: 7, minute: 0 }));
       this.toast(this.i18n.t('rested', { n: this.state().day }));
@@ -424,8 +454,9 @@ export class GameService {
   approachBlock(P: Person): string {
     const s = this.state();
     if (s.word < P.req) return this.i18n.t('notReady', { church: this.churchName(), n: P.req });
+    if (s.word < TALK_WORD) return this.i18n.t('needStudy', { church: this.churchName(), n: TALK_WORD });
     if (s.hour < 7 || s.hour >= 21) return this.i18n.t('tooLate');
-    if (s.body < 15) return this.i18n.t('tooTired');
+    if (s.body < TALK_ENERGY) return this.i18n.t('tooTired');
     return '';
   }
 
@@ -433,7 +464,7 @@ export class GameService {
     const s = this.state();
     if (s.word < P.req) return { txt: this.i18n.t('needsWord', { n: P.req }), cls: 't-lock' };
     const b = s.best[P.id];
-    if (!b) return { txt: this.i18n.t('notMet'), cls: 't-lock' };
+    if (!b) return { txt: this.i18n.t(P.phone ? 'callFromHome' : 'notMet'), cls: 't-lock' };
     return { txt: this.i18n.t(OUTCOMES[b].key), cls: OUTCOMES[b].cls };
   }
 
@@ -441,7 +472,7 @@ export class GameService {
     this.autopilot.set(null);
     this.state.update((s) => {
       s = this.passHours(s, 1);
-      return { ...s, body: clamp(s.body - 8) };
+      return { ...s, body: clamp(s.body - TALK_ENERGY), word: clamp(s.word - TALK_WORD) };
     });
     this.talking.set({ P, round: 0, open: 50, log: [], phase: 'question', choices: shuffle(P.rounds[0].a) });
   }
@@ -450,7 +481,8 @@ export class GameService {
     const t = this.talking();
     if (!t) return;
     const q = a[1];
-    const open = Math.max(0, Math.min(100, t.open + { good: 18, ok: 3, bad: -25 }[q]));
+    const top = t.P.kind === 'refuse' ? REFUSE_CAP : 100;
+    const open = Math.max(0, Math.min(top, t.open + { good: 18, ok: 3, bad: -25 }[q]));
     this.state.update((s) => ({
       ...s,
       total: s.total + 1,
@@ -474,6 +506,8 @@ export class GameService {
     const best = round.a.find((x) => x[1] === 'good') ?? round.a[0];
     const key = q === 'good' ? 'typedGood' : q === 'ok' ? 'typedOk' : 'typedBad';
     this.answer([text.trim(), q, { en: UI.en[key], fr: UI.fr[key] }, best[3]]);
+    const after = this.talking();
+    if (after) this.talking.set({ ...after, close: closeness(text, round.typed) });
   }
 
   isLastRound(t: Talk): boolean {
@@ -488,7 +522,14 @@ export class GameService {
       return;
     }
     const round = t.round + 1;
-    this.talking.set({ ...t, round, phase: 'question', picked: undefined, choices: shuffle(t.P.rounds[round].a) });
+    this.talking.set({
+      ...t,
+      round,
+      phase: 'question',
+      picked: undefined,
+      close: undefined,
+      choices: shuffle(t.P.rounds[round].a),
+    });
   }
 
   /** The closing message for a finished conversation, in the current language. */
@@ -499,17 +540,25 @@ export class GameService {
         return this.i18n.t('endOpen', params);
       case 'seed':
         return this.i18n.t('endSeed', params);
+      case 'declined':
+        return this.i18n.t('endDeclined', params);
+      case 'cared':
+        return this.i18n.t('endCared', params);
+      case 'helped':
+        return this.i18n.t('endHelped', params);
       case 'awayCut':
         return this.i18n.t('endAwayCut', params);
+      case 'away':
+        return this.i18n.t(t.P.kind === 'refuse' ? 'endRefusedHard' : 'endAwayPolite', params);
       case 'awayPolite':
       case undefined:
-        return this.i18n.t('endAwayPolite', params);
+        return this.i18n.t(t.P.kind === 'refuse' ? 'endRefusedHard' : 'endAwayPolite', params);
     }
   }
 
   private finish(t: Talk): void {
     const { P, open } = t;
-    const out: OutcomeId = open <= 0 ? 'away' : open >= 80 ? 'open' : open >= 45 ? 'seed' : 'away';
+    const out = outcomeFor(P, open);
     const prev = this.state().best[P.id];
     if (!prev || OUTCOMES[out].rank > OUTCOMES[prev].rank) {
       this.state.update((s) => ({ ...s, best: { ...s.best, [P.id]: out } }));
@@ -518,7 +567,7 @@ export class GameService {
     this.talking.set({ ...t, phase: 'result', outcome: out, ending });
     if (this.state().body <= 0) this.faint();
     this.save();
-    if (this.people().every((p) => this.state().best[p.id] === 'open')) {
+    if (this.people().every((p) => this.state().best[p.id] === goalOf(p))) {
       setTimeout(() => {
         this.toast(this.i18n.t('allWon'));
       }, 600);

@@ -1,7 +1,8 @@
 # Go and Tell
 
 Angular 21 port of a three.js street-evangelism game: pick a city (Accra, Lille, Paris, Douai), walk its 3D
-street, talk to its people and get feedback on each answer. English and French. Original was a single-file
+street, talk to its people and get feedback on each answer. English and French. Accra is kept but hidden from the
+picker (`hidden: true`). Original was a single-file
 Claude artifact.
 
 ## Stack and layout
@@ -50,6 +51,8 @@ at a time, never the e2e suite with many workers locally, never `taskkill /IM no
 - [x] Real OpenStreetMap maps for all four cities with traffic and a crowd on the real streets (ADR 0006). Phase 2 done
 - [x] Phase 1 of the living-world roadmap: ambient clock, weather, traffic, crowd, sound (see docs/ROADMAP.md)
 - [ ] OWNER: review the draft conversations for Lille, Paris and Douai, then set `reviewed: true`
+- [ ] OWNER: review the new people in `cities/*.more.ts` (people who say no, church hurt, practical care, phone calls;
+      "Presiding Elder" is "l’Ancien président" in French) and the 15-Word cost per conversation
 - [ ] Translate the Accra conversations into French (currently English only)
 - [ ] Landmark buildings per city (belfry, Eiffel-style tower, Braderie stalls) instead of the shared shapes
 - [ ] More cities (Roubaix, Strasbourg, Marseille, Kumasi, ...)

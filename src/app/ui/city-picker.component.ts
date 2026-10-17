@@ -18,7 +18,7 @@ import { LangSwitchComponent } from './lang-switch.component';
           <h2 class="picker-sub-title">{{ i18n.t('pickTitle') }}</h2>
           <p>{{ i18n.t('pickSub') }}</p>
           <div class="cities">
-            @for (c of svc.cities; track c.id) {
+            @for (c of svc.pickable; track c.id) {
               <button class="city" [id]="'city-' + c.id" (click)="svc.selectCity(c.id)">
                 <app-city-art [city]="c.id" />
                 <span class="city-country">{{ i18n.tr(c.country) }}</span>

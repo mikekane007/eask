@@ -21,6 +21,7 @@ import type { RoomService } from './net/room.service';
 import { createRemotePlayers } from './remote-players';
 import type { SoundService } from './sound.service';
 import { createWeatherFx } from './weather-fx';
+import { TALK_WORD, goalOf } from './state';
 import type { City } from './types';
 export interface Engine {
   start(): void;
@@ -432,7 +433,7 @@ export async function createEngine(
       const legs = g.userData['legs'] as THREE.Group[],
         arms = g.userData['arms'] as THREE.Group[];
       const close = Math.hypot(p.x - g.position.x, p.z - g.position.z) < 5;
-      const on = st.word >= P.req && st.best[P.id] !== 'open';
+      const on = st.word >= Math.max(P.req, TALK_WORD) && st.best[P.id] !== goalOf(P);
       const inTalk = talking?.P === P;
       // a gentle breath, so nobody stands perfectly still
       (g.userData['chest'] as THREE.Mesh).scale.set(

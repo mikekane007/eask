@@ -44,8 +44,13 @@ the French book names are applied on display. If you cite a book that is not in 
 
 ## Balance numbers (in `GameService`)
 
-- Talk costs 1 hour and 8 energy. Hours cost 1.5 energy and 0.2 Word each.
+- Talk costs 1 hour, 20 energy and 15 Word (`TALK_ENERGY`, `TALK_WORD` in `state.ts`), so the player studies at
+  church between people. A new game starts with exactly 15 Word. Hours cost 1.5 energy and 0.2 Word each.
 - Openness starts at 50: good +18, ok +3, bad -25. Outcome: 80+ open, 45+ seed, otherwise away; 0 ends the talk early.
+- Person `kind`: `talk` (default), `refuse` (openness capped at 60; 45+ ends as "said no, door left open", which is
+  the goal) and `care` (practical help; 80+ "cared for", 45+ "helped a little"). `goalOf`/`outcomeFor` in `state.ts`.
+- Round 2 (index 1) of every person must be typed, with no list: `typed3(...)` in new files, or an entry in `typed.ts`.
+  `typed.spec.ts` checks that the good answer grades wise and the bad one does not, in both languages.
 - Chapel study gives +12 Word, training +20 (needs 20), so a `req` above about 60 needs several visits.
 
 ## Escalate to the owner
@@ -55,6 +60,11 @@ community is portrayed. Draft the text, mark the city `reviewed: false`, and wai
 it to `true`. Never mark your own draft as reviewed.
 
 ## Gotchas
+
+- 2026-10-17: `phone: true` people are reached from a home option (`callOpt`) and are not on the street. Keep them
+  last in a city's list: street people take map spots by index, so a phone person in the middle would move everyone.
+  Adding street people needs more spots in `public/maps/<city>.json` (`pickAnchors` with a higher count keeps the
+  existing spots, since it is seeded and greedy).
 
 - 2026-10-10: Saved games key results by person `id` and city `id` (`goandtell:<cityId>`). Renaming either
   silently drops progress; add a migration if you must rename.

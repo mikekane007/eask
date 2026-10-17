@@ -3,22 +3,33 @@ import { HAIR_COLORS, HAIR_STYLES, type HairStyle, OUTFITS, SKIN_TONES, css, typ
 import type { UiKey } from '../game/i18n/ui';
 import { GameService } from '../game/game.service';
 import { I18n } from '../game/i18n/i18n.service';
+import { RoomService } from '../game/net/room.service';
+import { AvatarPreviewComponent } from './avatar-preview.component';
 
-/** Choose how your character looks. The preview is plain HTML, so no second 3D scene is needed. */
+/** Choose your name and how your character looks, with the character shown in 3D as it walks the city. */
 @Component({
   selector: 'app-avatar',
   standalone: true,
+  imports: [AvatarPreviewComponent],
   template: `
     @if (svc.avatarOpen()) {
       <div class="modal" role="dialog" aria-modal="true" [attr.aria-label]="i18n.t('lookTitle')">
         <div class="modal-in avatar">
           <h2>{{ i18n.t('lookTitle') }}</h2>
-          <div class="look" aria-hidden="true">
-            <i [class]="'l-hair ' + styles[a().style]" [style.background]="hair(a())"></i>
-            <i class="l-head" [style.background]="skin(a())"></i>
-            <i class="l-body" [class.dress]="a().female" [style.background]="outfit(a())"></i>
-            <i class="l-leg" [style.background]="a().female ? skin(a()) : '#22303c'"></i>
-          </div>
+          <app-avatar-preview [look]="a()" [label]="i18n.t('lookTitle')" />
+          <p class="look-turn">{{ i18n.t('lookTurn') }}</p>
+          <label class="opt-title" for="look-name">{{ i18n.t('lookName') }}</label>
+          <input
+            #nameBox
+            id="look-name"
+            type="text"
+            class="reply name"
+            maxlength="20"
+            autocomplete="nickname"
+            [placeholder]="i18n.t('lookNameHint')"
+            [value]="room.name()"
+            (input)="room.setName(nameBox.value)"
+          />
           <div class="seg" role="group">
             <button
               type="button"
@@ -93,7 +104,7 @@ import { I18n } from '../game/i18n/i18n.service';
               ></button>
             }
           </div>
-          <button class="mbtn" (click)="svc.confirmAvatar()">{{ i18n.t('lookDone') }}</button>
+          <button class="mbtn" [disabled]="!room.hasName()" (click)="done()">{{ i18n.t('lookDone') }}</button>
         </div>
       </div>
     }
@@ -102,6 +113,7 @@ import { I18n } from '../game/i18n/i18n.service';
 export class AvatarComponent {
   readonly svc = inject(GameService);
   readonly i18n = inject(I18n);
+  readonly room = inject(RoomService);
   readonly skins = SKIN_TONES;
   readonly hairs = HAIR_COLORS;
   readonly outfits = OUTFITS;
@@ -116,9 +128,11 @@ export class AvatarComponent {
 
   a = this.svc.avatar;
 
-  skin = (a: Avatar) => css(SKIN_TONES[a.skin]);
-  hair = (a: Avatar) => css(HAIR_COLORS[a.hair]);
-  outfit = (a: Avatar) => css(OUTFITS[a.outfit].color);
+  done(): void {
+    if (!this.room.hasName()) return;
+    this.room.saveName();
+    this.svc.confirmAvatar();
+  }
 
   set(change: Partial<Avatar>): void {
     this.svc.setAvatar({ ...this.svc.avatar(), ...change });

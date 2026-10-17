@@ -114,7 +114,8 @@ describe('real maps', () => {
       const file = `public/${city.map.url}`;
       expect(fs.existsSync(file), `${city.id} map file`).toBe(true);
       const map = JSON.parse(fs.readFileSync(file, 'utf8')) as { credit: string; anchors: { people: unknown[] } };
-      expect(map.anchors.people.length, `${city.id} people spots`).toBeGreaterThanOrEqual(city.people.length);
+      const street = city.people.filter((p) => !p.phone).length;
+      expect(map.anchors.people.length, `${city.id} people spots`).toBeGreaterThanOrEqual(street);
       expect(map.credit).toContain('OpenStreetMap');
     }
   });
