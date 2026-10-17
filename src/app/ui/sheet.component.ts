@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, Injector, afterNextRender, computed, effect, inject, signal } from '@angular/core';
 import { GameService, type Talk } from '../game/game.service';
 import { I18n } from '../game/i18n/i18n.service';
 import { SoundService } from '../game/sound.service';
@@ -13,7 +13,7 @@ import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types'
   imports: [PortraitComponent],
   template: `
     @if (svc.sheetVisible()) {
-      <div class="sheet">
+      <div class="sheet" role="region" [attr.aria-label]="regionLabel()">
         <div class="sheet-in">
           @if (svc.talking(); as t) {
             @switch (t.phase) {
@@ -107,7 +107,7 @@ import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types'
                       </div>
                     </div>
                   }
-                  <div [class]="'fb ' + p[1]">
+                  <div [class]="'fb ' + p[1]" role="status">
                     <span class="verdict">{{ i18n.t(verdictKey[p[1]]) }}</span
                     >{{ i18n.tr(p[2]) }}<span class="ref">{{ i18n.ref(p[3]) }}</span>
                   </div>
@@ -126,7 +126,7 @@ import type { Answer, Person, Place, PlaceOption, Quality } from '../game/types'
                 @if (t.outcome; as o) {
                   <h2 [class]="outcomes[o].cls" style="color:inherit">{{ i18n.t(outcomes[o].key) }}</h2>
                 }
-                <p style="line-height:1.5;margin:6px 0 4px">{{ svc.endMessage(t) }}</p>
+                <p style="line-height:1.5;margin:6px 0 4px" role="status">{{ svc.endMessage(t) }}</p>
                 <ul class="review">
                   @for (q of t.log; track $index) {
                     <li>
@@ -201,6 +201,33 @@ export class SheetComponent {
   readonly svc = inject(GameService);
   readonly i18n = inject(I18n);
   private readonly sound = inject(SoundService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
+
+  constructor() {
+    // In a conversation, keyboard and screen-reader users start where the next step is: the reply box or the
+    // first answer, then Continue, then Back to the street. Place panels open while walking, so they keep the keys.
+    effect(() => {
+      const t = this.svc.talking();
+      if (!t) return;
+      const target = t.phase === 'question' ? (this.isTyped(t) ? 'input.reply' : 'button.opt') : 'button.go';
+      afterNextRender(
+        () => {
+          this.host.nativeElement.querySelector<HTMLElement>(target)?.focus();
+        },
+        { injector: this.injector },
+      );
+    });
+  }
+
+  /** Name of the panel for screen readers: the person being spoken to, or the place. */
+  readonly regionLabel = computed(() => {
+    const t = this.svc.talking();
+    if (t) return t.P.name;
+    const c = this.svc.current();
+    if (c?.kind === 'npc') return c.ref.name;
+    return c?.ref.name ? this.i18n.tr(c.ref.name) : '';
+  });
 
   pick(a: Answer): void {
     this.svc.answer(a);

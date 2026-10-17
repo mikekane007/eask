@@ -192,6 +192,7 @@ test('someone can be phoned from home, and the typed question has no list of ans
   await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.getByText('Question 2 of 3')).toBeVisible();
   await expect(page.locator('#ans-1-0')).toHaveCount(0);
+  await expect(page.getByPlaceholder('Type what you would say…')).toBeFocused();
   await page.getByPlaceholder('Type what you would say…').fill('That sounds lonely, could I visit you this week?');
   await page.getByRole('button', { name: 'Say it' }).click();
   await expect(page.getByText(/How close you came: \d+%/)).toBeVisible();

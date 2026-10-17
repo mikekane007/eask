@@ -56,7 +56,7 @@ at a time, never the e2e suite with many workers locally, never `taskkill /IM no
 - [ ] Translate the Accra conversations into French (currently English only)
 - [ ] Landmark buildings per city (belfry, Eiffel-style tower, Braderie stalls) instead of the shared shapes
 - [ ] More cities (Roubaix, Strasbourg, Marseille, Kumasi, ...)
-- [ ] Keyboard/screen-reader pass on the sheet (focus the first option when it opens)
+- [x] Keyboard/screen-reader pass on the sheet: focus moves through a conversation, feedback is announced, text fields keep their letters
 - [ ] Sound: footsteps, ambient street (needs owner approval for any assets)
 - [ ] Deploy (ask the owner first: host, domain, cost)
 

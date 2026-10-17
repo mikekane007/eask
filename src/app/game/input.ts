@@ -5,6 +5,8 @@ import type { GameService } from './game.service';
 export function createInput(canvas: HTMLCanvasElement, svc: GameService, zone: NgZone) {
   const keys: Record<string, boolean> = {};
   const onKeyDown = (e: KeyboardEvent) => {
+    // letters typed into a name or a reply are words, not steps
+    if (isTyping(e.target)) return;
     keys[e.key.toLowerCase()] = true;
   };
   const onKeyUp = (e: KeyboardEvent) => {
@@ -65,4 +67,10 @@ export function createInput(canvas: HTMLCanvasElement, svc: GameService, zone: N
       canvas.removeEventListener('pointercancel', endJoy);
     },
   };
+}
+
+/** True when a key press goes into a text field rather than to the game. */
+export function isTyping(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return target.isContentEditable || target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
 }
